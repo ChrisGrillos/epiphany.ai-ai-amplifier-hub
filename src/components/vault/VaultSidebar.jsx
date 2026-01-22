@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, FolderOpen, Clock, Sparkles, ChevronRight } from 'lucide-react';
+import { Plus, FolderOpen, Clock, Sparkles, ChevronRight, Settings, ChevronLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -19,13 +19,17 @@ export default function VaultSidebar({
   activeVaultId, 
   onSelectVault, 
   onCreateVault,
-  collapsed = false 
+  onOpenEpiSettings,
+  isLoading,
+  isCollapsed,
+  onToggleCollapse,
+  epiLevel = 1
 }) {
   const sortedVaults = [...(vaults || [])].sort((a, b) => 
     new Date(b.last_accessed || b.created_date) - new Date(a.last_accessed || a.created_date)
   );
 
-  if (collapsed) {
+  if (isCollapsed) {
     return (
       <div className="w-16 border-r border-zinc-800/50 bg-zinc-950/50 flex flex-col items-center py-4 gap-2">
         <Button
@@ -56,6 +60,30 @@ export default function VaultSidebar({
             </div>
           </button>
         ))}
+        <div className="mt-auto space-y-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onOpenEpiSettings}
+            className="h-10 w-10 rounded-xl hover:bg-zinc-800/50 text-zinc-400 hover:text-white relative"
+            title={`Epi Level ${epiLevel}`}
+          >
+            <Sparkles className="h-5 w-5" />
+            {epiLevel > 0 && (
+              <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-violet-600 text-white text-[9px] flex items-center justify-center font-bold">
+                {epiLevel}
+              </span>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="h-10 w-10 rounded-xl hover:bg-zinc-800/50 text-zinc-400 hover:text-white"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
     );
   }
@@ -140,10 +168,32 @@ export default function VaultSidebar({
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-3 border-t border-zinc-800/50">
-        <p className="text-[10px] text-zinc-600 text-center">
+      <div className="p-3 border-t border-zinc-800/50 flex items-center justify-between">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onOpenEpiSettings}
+          className="h-8 w-8 text-zinc-500 hover:text-white hover:bg-zinc-800 relative"
+          title={`Epi Level ${epiLevel}`}
+        >
+          <Sparkles className="h-4 w-4" />
+          {epiLevel > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-violet-600 text-white text-[9px] flex items-center justify-center font-bold">
+              {epiLevel}
+            </span>
+          )}
+        </Button>
+        <p className="text-[10px] text-zinc-600 flex-1 text-center">
           Memory that improves, never rots
         </p>
+        <Button
+          onClick={onToggleCollapse}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-zinc-500 hover:text-white hover:bg-zinc-800"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
