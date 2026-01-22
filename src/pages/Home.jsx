@@ -26,6 +26,7 @@ import DragScrollArea from '@/components/ui/DragScrollArea';
 import EpiSettings from '@/components/epi/EpiSettings';
 import EpiChat from '@/components/epi/EpiChat';
 import EpiNudge from '@/components/epi/EpiNudge';
+import EpiAvatar from '@/components/epi/EpiAvatar';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -850,6 +851,11 @@ If no issues, return: {"status": "ok", "notes": []}`;
           }}
         />
       )}
+
+      {/* Epi Avatar - Bottom Left Corner */}
+      <div className="fixed bottom-6 left-6 z-50">
+        <EpiAvatar onClick={() => setShowEpiSettings(true)} />
+      </div>
     </div>
   );
 }
