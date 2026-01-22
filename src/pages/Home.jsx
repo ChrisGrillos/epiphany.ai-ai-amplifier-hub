@@ -567,7 +567,14 @@ If no issues, return: {"status": "ok", "notes": []}`;
               onEndSession={handleEndSession}
               onViewSummary={() => setShowSummary(true)}
               onUpdateInsights={handleUpdateInsights}
+              onShowReferences={() => setShowReferencesList(true)}
+              onShowImport={() => setShowImportChat(true)}
+              onShowExport={() => {}}
+              onShowGuardian={() => setShowGuardian(true)}
+              onShowCalendar={() => setShowCalendarExport(true)}
+              onShowEmail={() => setShowEmailDraft(true)}
               hasMessages={messages.length > 0}
+              referencesCount={references.length}
             />
 
             {/* Messages */}

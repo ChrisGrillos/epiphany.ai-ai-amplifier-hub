@@ -7,7 +7,13 @@ import {
   Settings2, 
   StopCircle,
   Zap,
-  ChevronDown
+  ChevronDown,
+  FileText,
+  Download,
+  Shield,
+  Calendar,
+  Mail,
+  MoreHorizontal
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -33,7 +39,14 @@ export default function SessionHeader({
   onEndSession, 
   onViewSummary,
   onUpdateInsights,
-  hasMessages 
+  onShowReferences,
+  onShowImport,
+  onShowExport,
+  onShowGuardian,
+  onShowCalendar,
+  onShowEmail,
+  hasMessages,
+  referencesCount = 0
 }) {
   const currentLevel = insightLevels.find(l => l.value === vault?.live_insights_level) || insightLevels[0];
 
@@ -81,6 +94,22 @@ export default function SessionHeader({
           <span className="text-xs">Summary</span>
         </Button>
 
+        {/* References */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onShowReferences}
+          className="h-8 text-zinc-400 hover:text-white hover:bg-zinc-800 relative"
+        >
+          <FileText className="h-4 w-4 mr-1.5" />
+          <span className="text-xs">References</span>
+          {referencesCount > 0 && (
+            <Badge className="ml-1.5 h-4 px-1 text-[10px] bg-blue-600">
+              {referencesCount}
+            </Badge>
+          )}
+        </Button>
+
         {/* Insights Level */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -112,6 +141,43 @@ export default function SessionHeader({
                 <span className="text-[11px] text-zinc-500">{level.desc}</span>
               </DropdownMenuItem>
             ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* More Actions */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-zinc-400 hover:text-white hover:bg-zinc-800"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48 bg-zinc-900 border-zinc-800">
+            <DropdownMenuItem onClick={onShowImport} className="cursor-pointer">
+              <Download className="h-4 w-4 mr-2 text-emerald-400" />
+              Import Web Chat
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onShowExport} className="cursor-pointer">
+              <Download className="h-4 w-4 mr-2 text-blue-400" />
+              Export
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-zinc-800" />
+            <DropdownMenuItem onClick={onShowGuardian} className="cursor-pointer">
+              <Shield className="h-4 w-4 mr-2 text-violet-400" />
+              Vault Guardian
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-zinc-800" />
+            <DropdownMenuItem onClick={onShowCalendar} className="cursor-pointer">
+              <Calendar className="h-4 w-4 mr-2 text-blue-400" />
+              Export Calendar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onShowEmail} className="cursor-pointer">
+              <Mail className="h-4 w-4 mr-2 text-emerald-400" />
+              Draft Email
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
