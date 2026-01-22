@@ -23,6 +23,10 @@ import GuardianPanel from '@/components/guardian/GuardianPanel';
 import CalendarExport from '@/components/calendar/CalendarExport';
 import EmailDraft from '@/components/email/EmailDraft';
 import DragScrollArea from '@/components/ui/DragScrollArea';
+import EpiSettings from '@/components/epi/EpiSettings';
+import EpiChat from '@/components/epi/EpiChat';
+import EpiNudge from '@/components/epi/EpiNudge';
+import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
@@ -84,6 +88,8 @@ export default function Home() {
   const [showGuardian, setShowGuardian] = useState(false);
   const [showCalendarExport, setShowCalendarExport] = useState(false);
   const [showEmailDraft, setShowEmailDraft] = useState(false);
+  const [showEpiSettings, setShowEpiSettings] = useState(false);
+  const [showEpiChat, setShowEpiChat] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
@@ -97,6 +103,11 @@ export default function Home() {
   // Guardian
   const [guardianNotes, setGuardianNotes] = useState([]);
   const [guardianLoading, setGuardianLoading] = useState(false);
+  
+  // Epi
+  const [epiLevel, setEpiLevel] = useState(1);
+  const [epiNudge, setEpiNudge] = useState(null);
+  const [appSettings, setAppSettings] = useState(null);
 
   // API Key stored in localStorage
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('grok_api_key') || '');
@@ -112,6 +123,29 @@ export default function Home() {
     queryFn: () => activeVault ? base44.entities.Reference.filter({ vault_id: activeVault.id }) : [],
     enabled: !!activeVault,
   });
+
+  // Load app settings for Epi
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await base44.entities.AppSettings.list();
+        if (settings.length > 0) {
+          setAppSettings(settings[0]);
+          setEpiLevel(getEffectiveEpiLevel(activeVault, settings[0]));
+        }
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // Update Epi level when vault changes
+  useEffect(() => {
+    if (activeVault && appSettings) {
+      setEpiLevel(getEffectiveEpiLevel(activeVault, appSettings));
+    }
+  }, [activeVault, appSettings]);
 
   // Scroll to bottom
   useEffect(() => {
@@ -327,9 +361,23 @@ PROPOSE_FILE_UPDATE: <filename>
       setSelectedReferenceIds([]);
       toast.success('Living Summary updated');
       
-      // Run Guardian if enabled
-      if (activeVault.run_guardian_after_synthesis) {
+      // Log Epi action
+      await logEpiAction(activeVault.id, 'synthesis_complete', epiLevel, 
+        { message_count: messages.length }, 
+        'Synthesis accepted and saved'
+      );
+      
+      // Run Guardian if enabled (and Epi level >= 3)
+      if (activeVault.run_guardian_after_synthesis && epiLevel >= 3) {
         runGuardianCheck(finalSummary);
+      }
+      
+      // Generate Level 4 nudge if appropriate
+      if (epiLevel === 4) {
+        setTimeout(() => {
+          const nudge = generateProactiveNudge(activeVault, [], references);
+          if (nudge) setEpiNudge(nudge);
+        }, 2000);
       }
     } catch (error) {
       toast.error('Failed to save summary');
@@ -435,6 +483,12 @@ ${activeVault?.living_summary}`,
         toast.success('Chat imported');
       }
 
+      // Log Epi action
+      await logEpiAction(activeVault.id, 'import_chat', epiLevel, 
+        { source: import_source_name, message_count: importedMessages.length },
+        'External chat imported'
+      );
+
       // Run synthesis if requested
       if (runSynthesis) {
         setTimeout(() => handleEndSession(), 500);
@@ -529,6 +583,40 @@ If no issues, return: {"status": "ok", "notes": []}`;
     );
   };
 
+  const handleUpdateEpiLevel = async (newLevel) => {
+    try {
+      if (appSettings) {
+        await updateVaultMutation.mutateAsync({
+          id: appSettings.id,
+          data: { epi_level: newLevel }
+        });
+        setAppSettings(prev => ({ ...prev, epi_level: newLevel }));
+        setEpiLevel(newLevel);
+        toast.success(`Epi set to Level ${newLevel}`);
+      } else {
+        // Create settings
+        const settings = await base44.entities.AppSettings.create({ epi_level: newLevel });
+        setAppSettings(settings);
+        setEpiLevel(newLevel);
+        toast.success(`Epi set to Level ${newLevel}`);
+      }
+    } catch (error) {
+      toast.error('Failed to update Epi level');
+    }
+  };
+
+  const handleExportContextPack = () => {
+    const pack = prepareContextPack(activeVault, references, messages, '');
+    navigator.clipboard.writeText(pack);
+    toast.success('Context pack copied (prepared by Epi)');
+    
+    // Log action
+    logEpiAction(activeVault.id, 'context_prep', epiLevel, 
+      { reference_count: references.length, message_count: messages.length },
+      'Context pack prepared for external AI'
+    );
+  };
+
   // Render
   if (vaultsLoading) {
     return (
@@ -569,8 +657,9 @@ If no issues, return: {"status": "ok", "notes": []}`;
               onUpdateInsights={handleUpdateInsights}
               onShowReferences={() => setShowReferencesList(true)}
               onShowImport={() => setShowImportChat(true)}
-              onShowExport={() => {}}
+              onShowExport={handleExportContextPack}
               onShowGuardian={() => setShowGuardian(true)}
+              onShowEpiChat={epiLevel >= 3 ? () => setShowEpiChat(true) : null}
               onShowCalendar={() => setShowCalendarExport(true)}
               onShowEmail={() => setShowEmailDraft(true)}
               hasMessages={messages.length > 0}
@@ -733,6 +822,34 @@ If no issues, return: {"status": "ok", "notes": []}`;
         vaultName={activeVault?.name}
         apiKey={apiKey}
       />
+
+      <EpiSettings
+        open={showEpiSettings}
+        onOpenChange={setShowEpiSettings}
+        epiLevel={epiLevel}
+        onLevelChange={handleUpdateEpiLevel}
+      />
+
+      {epiLevel >= 3 && (
+        <EpiChat
+          open={showEpiChat}
+          onOpenChange={setShowEpiChat}
+          vault={activeVault}
+          apiKey={apiKey}
+          epiLevel={epiLevel}
+        />
+      )}
+
+      {epiLevel === 4 && epiNudge && (
+        <EpiNudge
+          nudge={epiNudge}
+          onDismiss={() => setEpiNudge(null)}
+          onAction={() => {
+            if (epiNudge.type === 'long_session') handleEndSession();
+            setEpiNudge(null);
+          }}
+        />
+      )}
     </div>
   );
 }

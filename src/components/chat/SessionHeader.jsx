@@ -45,6 +45,7 @@ export default function SessionHeader({
   onShowGuardian,
   onShowCalendar,
   onShowEmail,
+  onShowEpiChat,
   hasMessages,
   referencesCount = 0
 }) {
@@ -162,8 +163,14 @@ export default function SessionHeader({
             </DropdownMenuItem>
             <DropdownMenuItem onClick={onShowExport} className="cursor-pointer">
               <Download className="h-4 w-4 mr-2 text-blue-400" />
-              Export
+              Export Context Pack
             </DropdownMenuItem>
+            {onShowEpiChat && (
+              <DropdownMenuItem onClick={onShowEpiChat} className="cursor-pointer">
+                <Sparkles className="h-4 w-4 mr-2 text-violet-400" />
+                Talk to Epi
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator className="bg-zinc-800" />
             <DropdownMenuItem onClick={onShowGuardian} className="cursor-pointer">
               <Shield className="h-4 w-4 mr-2 text-violet-400" />
