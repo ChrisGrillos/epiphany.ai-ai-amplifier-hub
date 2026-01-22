@@ -13,6 +13,16 @@ import SessionHeader from '@/components/chat/SessionHeader';
 import LiveSummaryView from '@/components/summary/LiveSummaryView';
 import SynthesisReview from '@/components/synthesis/SynthesisReview';
 import ApiKeySetup from '@/components/settings/ApiKeySetup';
+import AddReferenceModal from '@/components/references/AddReferenceModal';
+import ReferencesList from '@/components/references/ReferencesList';
+import AttachReferencesSelector from '@/components/references/AttachReferencesSelector';
+import ReferenceDiffReview from '@/components/references/ReferenceDiffReview';
+import ImportWebChatModal from '@/components/import/ImportWebChatModal';
+import ExportMenu from '@/components/export/ExportMenu';
+import GuardianPanel from '@/components/guardian/GuardianPanel';
+import CalendarExport from '@/components/calendar/CalendarExport';
+import EmailDraft from '@/components/email/EmailDraft';
+import DragScrollArea from '@/components/ui/DragScrollArea';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
@@ -67,11 +77,26 @@ export default function Home() {
   const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showSynthesisReview, setShowSynthesisReview] = useState(false);
+  const [showAddReference, setShowAddReference] = useState(false);
+  const [showReferencesList, setShowReferencesList] = useState(false);
+  const [showReferenceDiff, setShowReferenceDiff] = useState(false);
+  const [showImportChat, setShowImportChat] = useState(false);
+  const [showGuardian, setShowGuardian] = useState(false);
+  const [showCalendarExport, setShowCalendarExport] = useState(false);
+  const [showEmailDraft, setShowEmailDraft] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [insightsLoading, setInsightsLoading] = useState(false);
+  
+  // References
+  const [selectedReferenceIds, setSelectedReferenceIds] = useState([]);
+  const [pendingReferenceDiff, setPendingReferenceDiff] = useState(null);
+  
+  // Guardian
+  const [guardianNotes, setGuardianNotes] = useState([]);
+  const [guardianLoading, setGuardianLoading] = useState(false);
 
   // API Key stored in localStorage
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('grok_api_key') || '');
@@ -80,6 +105,12 @@ export default function Home() {
   const { data: vaults = [], isLoading: vaultsLoading } = useQuery({
     queryKey: ['vaults'],
     queryFn: () => base44.entities.Vault.list('-last_accessed'),
+  });
+
+  const { data: references = [] } = useQuery({
+    queryKey: ['references', activeVault?.id],
+    queryFn: () => activeVault ? base44.entities.Reference.filter({ vault_id: activeVault.id }) : [],
+    enabled: !!activeVault,
   });
 
   // Scroll to bottom
@@ -150,13 +181,41 @@ export default function Home() {
     setStreamingContent('');
 
     try {
-      // Build system prompt with Living Summary
+      // Build system prompt with Living Summary + Selected References
+      let contextText = `Context from Living Summary:\n${activeVault?.living_summary || 'No summary yet.'}`;
+      
+      // Inject selected references (cap to safe token limit)
+      if (selectedReferenceIds.length > 0) {
+        const selectedRefs = references.filter(r => selectedReferenceIds.includes(r.id));
+        const MAX_TOTAL_CHARS = 15000;
+        let totalChars = 0;
+        const refTexts = [];
+        
+        for (const ref of selectedRefs) {
+          const refContent = ref.full_content || ref.excerpt || '';
+          if (totalChars + refContent.length < MAX_TOTAL_CHARS) {
+            refTexts.push(`\n\n--- Reference: ${ref.filename} ---\n${refContent}`);
+            totalChars += refContent.length;
+          } else if (ref.excerpt && totalChars + ref.excerpt.length < MAX_TOTAL_CHARS) {
+            refTexts.push(`\n\n--- Reference: ${ref.filename} (excerpt) ---\n${ref.excerpt}`);
+            totalChars += ref.excerpt.length;
+          }
+        }
+        
+        if (refTexts.length > 0) {
+          contextText += '\n\nAttached References:' + refTexts.join('');
+        }
+      }
+
       const systemPrompt = `You are Epiphany, an AI thinking amplifier. You help users explore ideas, make decisions, and organize their thoughts.
 
-Context from Living Summary:
-${activeVault?.living_summary || 'No summary yet.'}
+${contextText}
 
-Be concise, insightful, and helpful. Focus on durable insights that could be added to the Living Summary later.`;
+Be concise, insightful, and helpful. Focus on durable insights that could be added to the Living Summary later.
+
+IMPORTANT: If the user asks you to modify a reference file, respond with:
+PROPOSE_FILE_UPDATE: <filename>
+<proposed new content>`;
 
       // Build conversation history
       const conversationHistory = messages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
@@ -170,9 +229,24 @@ Be concise, insightful, and helpful. Focus on durable insights that could be add
         file_urls: image_urls?.length > 0 ? image_urls : undefined,
       });
 
+      // Check if AI proposes a file update
+      if (response.includes('PROPOSE_FILE_UPDATE:')) {
+        const match = response.match(/PROPOSE_FILE_UPDATE:\s*(.+)\n([\s\S]+)/);
+        if (match) {
+          const filename = match[1].trim();
+          const proposedContent = match[2].trim();
+          const reference = references.find(r => r.filename === filename);
+          
+          if (reference) {
+            setPendingReferenceDiff({ reference, proposedContent });
+            setShowReferenceDiff(true);
+          }
+        }
+      }
+
       const assistantMessage = {
         role: 'assistant',
-        content: response,
+        content: response.replace(/PROPOSE_FILE_UPDATE:[\s\S]+/, '').trim() || 'I\'ve proposed changes to the reference file.',
         timestamp: new Date().toISOString()
       };
 
@@ -240,6 +314,7 @@ Be concise, insightful, and helpful. Focus on durable insights that could be add
         status: 'completed',
         started_at: activeSession?.started_at,
         ended_at: new Date().toISOString(),
+        attached_reference_ids: selectedReferenceIds,
         synthesis_result: {
           proposed_summary: finalSummary,
           accepted: true
@@ -249,7 +324,13 @@ Be concise, insightful, and helpful. Focus on durable insights that could be add
       setActiveVault(prev => ({ ...prev, living_summary: finalSummary }));
       setShowSynthesisReview(false);
       setMessages([]);
+      setSelectedReferenceIds([]);
       toast.success('Living Summary updated');
+      
+      // Run Guardian if enabled
+      if (activeVault.run_guardian_after_synthesis) {
+        runGuardianCheck(finalSummary);
+      }
     } catch (error) {
       toast.error('Failed to save summary');
     }
@@ -298,6 +379,156 @@ ${activeVault?.living_summary}`,
     handleSendMessage({ content: suggestion, image_urls: [] });
   };
 
+  const handleDeleteReference = async (refId) => {
+    try {
+      await base44.entities.Reference.delete(refId);
+      queryClient.invalidateQueries({ queryKey: ['references'] });
+      toast.success('Reference deleted');
+    } catch (error) {
+      toast.error('Failed to delete reference');
+    }
+  };
+
+  const handleAcceptReferenceDiff = async (newContent) => {
+    if (!pendingReferenceDiff) return;
+    
+    try {
+      // Update the reference content
+      await updateVaultMutation.mutateAsync({
+        id: pendingReferenceDiff.reference.id,
+        data: { 
+          full_content: newContent,
+          excerpt: newContent.substring(0, 500)
+        }
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['references'] });
+      setShowReferenceDiff(false);
+      setPendingReferenceDiff(null);
+      toast.success('Reference updated');
+    } catch (error) {
+      toast.error('Failed to update reference');
+    }
+  };
+
+  const handleImportWebChat = async ({ messages: importedMessages, source, import_source_name, appendToCurrent, runSynthesis }) => {
+    try {
+      if (appendToCurrent && activeSession) {
+        // Append to current session
+        setMessages(prev => [...prev, ...importedMessages]);
+        toast.success('Chat imported and appended');
+      } else {
+        // Create new session
+        const session = await base44.entities.Session.create({
+          vault_id: activeVault.id,
+          title: `Imported from ${import_source_name}`,
+          messages: importedMessages,
+          source,
+          import_source_name,
+          status: 'completed',
+          started_at: new Date().toISOString(),
+          ended_at: new Date().toISOString()
+        });
+        
+        setMessages(importedMessages);
+        setActiveSession(session);
+        toast.success('Chat imported');
+      }
+
+      // Run synthesis if requested
+      if (runSynthesis) {
+        setTimeout(() => handleEndSession(), 500);
+      }
+    } catch (error) {
+      toast.error('Failed to import chat');
+    }
+  };
+
+  const runGuardianCheck = async (summaryToCheck = null) => {
+    if (!apiKey) {
+      setShowApiKeySetup(true);
+      return;
+    }
+
+    setGuardianLoading(true);
+    setShowGuardian(true);
+
+    try {
+      const summary = summaryToCheck || activeVault?.living_summary;
+      const transcript = messages.map(m => `${m.role}: ${m.content}`).join('\n');
+
+      const prompt = `You are the Vault Guardian. Analyze this Living Summary and recent session for issues.
+
+Living Summary:
+${summary}
+
+Recent Session:
+${transcript || '(no recent session)'}
+
+Check for:
+1. Contradictions within the Living Summary
+2. Conflicts between summary and transcript
+3. Stale or conflicting Next Actions
+4. Unresolved Open Questions
+
+Return ONLY valid JSON in this exact format:
+{
+  "status": "ok",
+  "notes": [
+    {
+      "type": "contradiction|stale_action|missing_link|uncertainty|risk",
+      "severity": "low|medium|high",
+      "title": "Short headline",
+      "detail": "1-2 sentences explaining the issue",
+      "suggested_change": "What to edit",
+      "target_section": "Objective|Key Facts|Decisions|Open Questions|Next Actions"
+    }
+  ]
+}
+
+If no issues, return: {"status": "ok", "notes": []}`;
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            notes: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  type: { type: 'string' },
+                  severity: { type: 'string' },
+                  title: { type: 'string' },
+                  detail: { type: 'string' },
+                  suggested_change: { type: 'string' },
+                  target_section: { type: 'string' }
+                }
+              }
+            }
+          }
+        }
+      });
+
+      setGuardianNotes(result.notes || []);
+    } catch (error) {
+      toast.error('Guardian check failed');
+      console.error(error);
+    }
+
+    setGuardianLoading(false);
+  };
+
+  const toggleReferenceSelection = (refId) => {
+    setSelectedReferenceIds(prev => 
+      prev.includes(refId) 
+        ? prev.filter(id => id !== refId)
+        : [...prev, refId]
+    );
+  };
+
   // Render
   if (vaultsLoading) {
     return (
@@ -320,11 +551,13 @@ ${activeVault?.living_summary}`,
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {!activeVault ? (
-          <WelcomeScreen
-            onCreateVault={() => setShowCreateVault(true)}
-            onSetupApiKey={() => setShowApiKeySetup(true)}
-            hasApiKey={!!apiKey}
-          />
+          <DragScrollArea className="h-full" disabled={false}>
+            <WelcomeScreen
+              onCreateVault={() => setShowCreateVault(true)}
+              onSetupApiKey={() => setShowApiKeySetup(true)}
+              hasApiKey={!!apiKey}
+            />
+          </DragScrollArea>
         ) : (
           <>
             {/* Header */}
@@ -340,12 +573,14 @@ ${activeVault?.living_summary}`,
             {/* Messages */}
             <div className="flex-1 overflow-hidden">
               {messages.length === 0 ? (
-                <EmptyState
-                  vaultName={activeVault.name}
-                  onStartPrompt={handleStartPrompt}
-                />
+                <DragScrollArea className="h-full">
+                  <EmptyState
+                    vaultName={activeVault.name}
+                    onStartPrompt={handleStartPrompt}
+                  />
+                </DragScrollArea>
               ) : (
-                <ScrollArea className="h-full">
+                <DragScrollArea className="h-full">
                   <div className="divide-y divide-zinc-800/30">
                     {messages.map((msg, idx) => (
                       <MessageBubble
@@ -362,21 +597,31 @@ ${activeVault?.living_summary}`,
                     )}
                   </div>
                   <div ref={messagesEndRef} />
-                </ScrollArea>
+                </DragScrollArea>
               )}
             </div>
 
             {/* Input */}
-            <ChatInput
-              onSend={handleSendMessage}
-              disabled={!apiKey}
-              isLoading={isLoading || isSynthesizing}
-              placeholder={
-                !apiKey 
-                  ? "Configure your API key to start..." 
-                  : "Start thinking with Epiphany..."
-              }
-            />
+            <div className="relative">
+              <div className="absolute left-4 bottom-4 z-10 flex items-center gap-2">
+                <AttachReferencesSelector
+                  references={references}
+                  selectedIds={selectedReferenceIds}
+                  onToggle={toggleReferenceSelection}
+                  disabled={!apiKey || isLoading}
+                />
+              </div>
+              <ChatInput
+                onSend={handleSendMessage}
+                disabled={!apiKey}
+                isLoading={isLoading || isSynthesizing}
+                placeholder={
+                  !apiKey 
+                    ? "Configure your API key to start..." 
+                    : "Start thinking with Epiphany..."
+                }
+              />
+            </div>
           </>
         )}
       </div>
@@ -412,6 +657,74 @@ ${activeVault?.living_summary}`,
         onAccept={handleAcceptSynthesis}
         onReject={handleRejectSynthesis}
         isProcessing={isSynthesizing}
+      />
+
+      <AddReferenceModal
+        open={showAddReference}
+        onOpenChange={setShowAddReference}
+        vaultId={activeVault?.id}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['references'] });
+          setShowAddReference(false);
+        }}
+      />
+
+      <ReferencesList
+        open={showReferencesList}
+        onOpenChange={setShowReferencesList}
+        references={references}
+        vaultName={activeVault?.name}
+        onAddReference={() => {
+          setShowReferencesList(false);
+          setShowAddReference(true);
+        }}
+        onDeleteReference={handleDeleteReference}
+      />
+
+      <ReferenceDiffReview
+        open={showReferenceDiff}
+        onOpenChange={setShowReferenceDiff}
+        reference={pendingReferenceDiff?.reference}
+        proposedContent={pendingReferenceDiff?.proposedContent}
+        onAccept={handleAcceptReferenceDiff}
+        onReject={() => {
+          setShowReferenceDiff(false);
+          setPendingReferenceDiff(null);
+          toast.info('Reference changes rejected');
+        }}
+        isProcessing={false}
+      />
+
+      <ImportWebChatModal
+        open={showImportChat}
+        onOpenChange={setShowImportChat}
+        onImport={handleImportWebChat}
+        hasActiveSession={messages.length > 0}
+      />
+
+      <GuardianPanel
+        open={showGuardian}
+        onOpenChange={setShowGuardian}
+        notes={guardianNotes}
+        isLoading={guardianLoading}
+        onCheckNow={() => runGuardianCheck()}
+        onDismissNote={(idx) => setGuardianNotes(prev => prev.filter((_, i) => i !== idx))}
+        vaultName={activeVault?.name}
+      />
+
+      <CalendarExport
+        open={showCalendarExport}
+        onOpenChange={setShowCalendarExport}
+        livingSummary={activeVault?.living_summary}
+        apiKey={apiKey}
+      />
+
+      <EmailDraft
+        open={showEmailDraft}
+        onOpenChange={setShowEmailDraft}
+        livingSummary={activeVault?.living_summary}
+        vaultName={activeVault?.name}
+        apiKey={apiKey}
       />
     </div>
   );
