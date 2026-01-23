@@ -81,13 +81,16 @@ export default function EpiSettings({ open, onOpenChange, epiLevel = 1, onLevelC
               </div>
             </div>
 
-            <Slider
-              value={[epiLevel]}
-              onValueChange={([value]) => onLevelChange(value)}
-              max={4}
-              step={1}
-              className="py-4"
-            />
+            <div className="px-2">
+              <Slider
+                value={[epiLevel]}
+                onValueChange={([value]) => onLevelChange(value)}
+                max={4}
+                min={0}
+                step={1}
+                className="cursor-pointer"
+              />
+            </div>
 
             <div className="flex justify-between text-[10px] text-zinc-600 px-1">
               <span>Off</span>

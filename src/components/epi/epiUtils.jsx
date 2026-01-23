@@ -63,7 +63,7 @@ export const prepareContextPack = (vault, references = [], recentMessages = [], 
   }
   
   if (references.length > 0) {
-    pack += `Attached References:\n${references.map(r => `- ${r.filename} (.${r.file_type})`).join('\n')}\n\n`;
+    pack += `Attached References:\n${references.map(r => `- ${r.filename}${r.type ? ` (.${r.type})` : ''}`).join('\n')}\n\n`;
   }
   
   if (recentMessages.length > 0) {
@@ -88,10 +88,13 @@ export const shouldEpiSpeak = (epiLevel, actionType) => {
   if (epiLevel === 0) return false;
   if (epiLevel === 1) return false; // Silent
   if (epiLevel === 2) {
-    // Only on destructive actions or user-triggered checks
-    return ['guardian_check', 'synthesis_complete'].includes(actionType);
+    // Only on specific actions: destructive confirms, guardian checks, synthesis complete
+    return ['destructive_confirm', 'guardian_check', 'synthesis_complete'].includes(actionType);
   }
-  if (epiLevel >= 3) return true; // Always available
+  if (epiLevel >= 3) {
+    // Level 3+: Available for user queries, import complete, and all Level 2 actions
+    return ['user_query', 'import_complete', 'destructive_confirm', 'guardian_check', 'synthesis_complete'].includes(actionType);
+  }
   return false;
 };
 

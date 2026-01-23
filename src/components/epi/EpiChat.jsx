@@ -116,9 +116,11 @@ export default function EpiChat({
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  const epiEnabled = epiLevel >= 3;
 
   const handleSend = async () => {
-    if (!input.trim() || !apiKey) return;
+    if (!input.trim() || !epiEnabled) return;
 
     const userMessage = {
       role: 'user',
@@ -126,29 +128,33 @@ export default function EpiChat({
       timestamp: new Date().toISOString()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
     setInput('');
     setIsProcessing(true);
 
     try {
-      // Build context
+      // Build context using nextMessages
       const context = `Current Vault: ${vault?.name}
 
 Living Summary:
 ${vault?.living_summary || '(empty)'}
 
 Recent conversation history:
-${messages.slice(-4).map(m => `${m.role === 'user' ? 'User' : 'Epi'}: ${m.content}`).join('\n\n')}`;
+${nextMessages.slice(-4).map(m => `${m.role === 'user' ? 'User' : 'Epi'}: ${m.content}`).join('\n\n')}`;
 
-      const fullPrompt = `${context}\n\nUser: ${userMessage.content}`;
+      const fullPrompt = `${EPI_LEVEL_3_SYSTEM}\n\n---\n\n${context}\n\nUSER MESSAGE:\n${userMessage.content}`;
 
       const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `${EPI_LEVEL_3_SYSTEM}\n\n${fullPrompt}`
+        prompt: fullPrompt
       });
+
+      // Normalize response
+      const epiText = response.text || response.output || response.response || String(response);
 
       const epiMessage = {
         role: 'assistant',
-        content: response,
+        content: epiText,
         timestamp: new Date().toISOString()
       };
 
@@ -160,7 +166,7 @@ ${messages.slice(-4).map(m => `${m.role === 'user' ? 'User' : 'Epi'}: ${m.conten
         action_type: 'user_query',
         epi_level_at_time: epiLevel,
         details: { query: userMessage.content },
-        epi_output: response
+        epi_output: epiText
       });
     } catch (error) {
       toast.error('Failed to get Epi response');
@@ -262,13 +268,13 @@ ${messages.slice(-4).map(m => `${m.role === 'user' ? 'User' : 'Epi'}: ${m.conten
                   handleSend();
                 }
               }}
-              placeholder="Paste a conversation, ask for a context pack, or request help..."
+              placeholder={epiEnabled ? "Paste a conversation, ask for a context pack, or request help..." : "Epi Level 3+ required to chat"}
               className="min-h-[80px] bg-zinc-800/50 border-zinc-700 text-white resize-none"
-              disabled={isProcessing || !apiKey}
+              disabled={isProcessing || !epiEnabled}
             />
             <Button
               onClick={handleSend}
-              disabled={!input.trim() || isProcessing || !apiKey}
+              disabled={!input.trim() || isProcessing || !epiEnabled}
               className="bg-violet-600 hover:bg-violet-500 text-white h-auto px-4"
             >
               <Send className="h-4 w-4" />
