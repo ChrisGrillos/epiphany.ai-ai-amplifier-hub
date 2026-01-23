@@ -55,7 +55,7 @@ export default function EpiSettings({ open, onOpenChange, epiLevel = 1, onLevelC
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 max-w-2xl">
+      <DialogContent className="bg-[#1a0e28] border-violet-700/30 max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             <Sparkles className="h-5 w-5 text-violet-400" />
@@ -70,13 +70,13 @@ export default function EpiSettings({ open, onOpenChange, epiLevel = 1, onLevelC
           {/* Slider */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Level</Label>
+              <Label className="text-white text-xs uppercase tracking-wider">Level</Label>
               <div className="flex items-center gap-2">
                 <span className={cn("text-2xl font-bold", currentLevel.color)}>
                   {epiLevel}
                 </span>
                 {currentLevel.isDefault && (
-                  <Badge className="bg-blue-500/20 text-blue-300 text-xs">Default</Badge>
+                  <Badge className="bg-emerald-500/30 text-emerald-300 text-xs border border-emerald-500/40">Default</Badge>
                 )}
               </div>
             </div>
@@ -92,7 +92,7 @@ export default function EpiSettings({ open, onOpenChange, epiLevel = 1, onLevelC
               />
             </div>
 
-            <div className="flex justify-between text-[10px] text-zinc-600 px-1">
+            <div className="flex justify-between text-[10px] text-zinc-300 px-1 font-medium">
               <span>Off</span>
               <span>Silent</span>
               <span>Guided</span>
@@ -104,7 +104,7 @@ export default function EpiSettings({ open, onOpenChange, epiLevel = 1, onLevelC
           {/* Current Level Details */}
           <div className={cn(
             "rounded-lg border p-4 space-y-3",
-            "bg-zinc-800/30 border-zinc-700/50"
+            "bg-[#2a1a40] border-violet-600/30"
           )}>
             <div className="flex items-center gap-2">
               <Sparkles className={cn("h-5 w-5", currentLevel.color)} />
@@ -118,18 +118,18 @@ export default function EpiSettings({ open, onOpenChange, epiLevel = 1, onLevelC
               {currentLevel.description}
             </p>
 
-            <div className="flex items-start gap-2 pt-2 border-t border-zinc-700/30">
-              <Info className="h-4 w-4 text-zinc-500 mt-0.5 shrink-0" />
-              <p className="text-xs text-zinc-500 leading-relaxed">
+            <div className="flex items-start gap-2 pt-2 border-t border-violet-600/20">
+              <Info className="h-4 w-4 text-emerald-400 mt-0.5 shrink-0" />
+              <p className="text-xs text-zinc-300 leading-relaxed">
                 {currentLevel.note}
               </p>
             </div>
           </div>
 
           {/* Footer Note */}
-          <div className="bg-violet-500/10 border border-violet-500/20 rounded-lg p-3">
-            <p className="text-xs text-violet-300 leading-relaxed">
-              <strong>Note:</strong> Epi never acts autonomously, rewrites your work without consent, 
+          <div className="bg-violet-600/20 border border-violet-500/40 rounded-lg p-3">
+            <p className="text-xs text-white leading-relaxed">
+              <strong className="text-yellow-400">Note:</strong> Epi never acts autonomously, rewrites your work without consent, 
               or sends data externally. You can change this level at any time.
             </p>
           </div>
