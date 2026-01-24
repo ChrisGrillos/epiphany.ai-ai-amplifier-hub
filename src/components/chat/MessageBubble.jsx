@@ -1,14 +1,16 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { cn } from '@/lib/utils';
-import { User, Sparkles, Copy, Check, Image as ImageIcon } from 'lucide-react';
+import { User, Sparkles, Copy, Check, Image as ImageIcon, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 export default function MessageBubble({ message, isStreaming }) {
   const [copied, setCopied] = React.useState(false);
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
+  const target = message.target || 'api';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -33,8 +35,10 @@ export default function MessageBubble({ message, isStreaming }) {
       )}>
         {isUser ? (
           <User className="h-4 w-4 text-zinc-400" />
-        ) : (
+        ) : target === 'epi' ? (
           <Sparkles className="h-4 w-4 text-violet-400" />
+        ) : (
+          <Zap className="h-4 w-4 text-emerald-400" />
         )}
       </div>
 
@@ -45,8 +49,21 @@ export default function MessageBubble({ message, isStreaming }) {
             "text-xs font-medium uppercase tracking-wider",
             isUser ? "text-zinc-500" : "text-violet-400/80"
           )}>
-            {isUser ? 'You' : 'Epiphany'}
+            {isUser ? 'You' : target === 'epi' ? 'Epi' : 'Assistant'}
           </span>
+          {!isUser && (
+            <Badge 
+              variant="outline" 
+              className={cn(
+                "h-5 text-[10px] font-normal",
+                target === 'epi' 
+                  ? "border-violet-500/30 text-violet-400"
+                  : "border-emerald-500/30 text-emerald-400"
+              )}
+            >
+              {target === 'epi' ? 'Epi' : 'API'}
+            </Badge>
+          )}
           {isStreaming && (
             <span className="flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-pulse" />
