@@ -35,6 +35,7 @@ import {
   prepareContextPackFromVault,
   generateVaultSnapshot 
 } from '@/components/epi/epiPasteUtils';
+import { estimateTokens, needsLLMAssist, truncateToTokenLimit } from '@/components/epi/tokenUtils';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
@@ -231,16 +232,46 @@ export default function Home() {
     try {
       const content = userMessage.content;
       let responseContent = '';
+      let usedLLM = false;
 
       // Check if it's a web chat paste
       if (detectWebChatPaste(content)) {
         const parsedMessages = parseWebChat(content);
-        responseContent = condenseWebChatLocal(parsedMessages);
+        
+        // Check if LLM assist is needed
+        if (needsLLMAssist(content) && apiKey) {
+          toast.info('Using AI to condense this (counts toward usage)');
+          
+          const prompt = `Condense this pasted conversation into structured notes.
+
+Conversation:
+${content}
+
+Output format:
+Decisions:
+- ...
+
+Actions/Next Steps:
+- ...
+
+Questions:
+- ...
+
+Key Points:
+- ...`;
+
+          responseContent = await base44.integrations.Core.InvokeLLM({ prompt });
+          responseContent = responseContent.text || responseContent.output || String(responseContent);
+          usedLLM = true;
+        } else {
+          // Use local processing
+          responseContent = condenseWebChatLocal(parsedMessages);
+        }
         
         // Log action
         await logEpiAction(activeVault.id, 'condense_paste', epiLevel, 
-          { chars_in: content.length, chars_out: responseContent.length, used_llm: false },
-          'Local parse complete'
+          { chars_in: content.length, chars_out: responseContent.length, used_llm: usedLLM },
+          'Parse complete'
         );
       }
       // Check for context pack request
@@ -866,6 +897,18 @@ If no issues, return: {"status": "ok", "notes": []}`;
         vaultName={activeVault?.name}
         onCheckInsights={handleCheckInsights}
         insightsLoading={insightsLoading}
+        onSuggestionAction={(suggestion) => {
+          // Handle suggestion actions
+          if (suggestion.handler === 'condenseSummary') {
+            setActiveTab('epi');
+            setShowSummary(false);
+            toast.info('Ask Epi to condense your summary');
+          } else if (suggestion.handler === 'refineSummary') {
+            setActiveTab('api');
+            setShowSummary(false);
+            toast.info('Ask your API to refine the summary');
+          }
+        }}
       />
 
       <SynthesisReview
@@ -898,6 +941,17 @@ If no issues, return: {"status": "ok", "notes": []}`;
           setShowAddReference(true);
         }}
         onDeleteReference={handleDeleteReference}
+        onSuggestionAction={(suggestion) => {
+          if (suggestion.handler === 'prepareContextPackWithReferences') {
+            setShowReferencesList(false);
+            setActiveTab('epi');
+            handleSendMessage({ 
+              content: 'Prepare a context pack using my attached references', 
+              image_urls: [], 
+              target: 'epi' 
+            });
+          }
+        }}
       />
 
       <ReferenceDiffReview

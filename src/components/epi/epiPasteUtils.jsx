@@ -78,6 +78,7 @@ export const parseWebChat = (text) => {
 
 /**
  * Condense pasted chat into structured notes (no LLM)
+ * Enhanced with better extraction logic
  */
 export const condenseWebChatLocal = (messages) => {
   let output = 'Condensed Notes (Local Parse by Epi)\n\n';
@@ -85,29 +86,65 @@ export const condenseWebChatLocal = (messages) => {
   // Extract key points from messages
   const facts = [];
   const questions = [];
+  const decisions = [];
+  const actions = [];
   
   messages.forEach(msg => {
-    // Look for questions
-    if (msg.content.includes('?')) {
-      const q = msg.content.split('?')[0].trim() + '?';
-      questions.push(q);
+    const content = msg.content;
+    
+    // Extract questions
+    const questionMatches = content.match(/[^.!?]*\?/g);
+    if (questionMatches) {
+      questions.push(...questionMatches.map(q => q.trim()));
     }
     
-    // Look for factual statements (simple heuristic)
-    if (msg.role === 'assistant' && msg.content.length < 200) {
-      facts.push(msg.content);
+    // Look for decision indicators
+    if (content.match(/\b(decided|decision|chose|selected|going with|will use)\b/i)) {
+      const sentences = content.split(/[.!]/);
+      sentences.forEach(s => {
+        if (s.match(/\b(decided|decision|chose|selected|going with|will use)\b/i)) {
+          decisions.push(s.trim());
+        }
+      });
+    }
+    
+    // Look for action items
+    if (content.match(/\b(should|need to|must|will|todo|task|action)\b/i)) {
+      const sentences = content.split(/[.!]/);
+      sentences.forEach(s => {
+        if (s.match(/\b(should|need to|must|will|todo|task|action)\b/i)) {
+          actions.push(s.trim());
+        }
+      });
+    }
+    
+    // Extract factual statements from assistant
+    if (msg.role === 'assistant') {
+      const sentences = content.split(/[.!]/).filter(s => s.length > 20 && s.length < 200);
+      facts.push(...sentences.slice(0, 3));
     }
   });
   
-  output += `Messages: ${messages.length}\n`;
-  output += `User turns: ${messages.filter(m => m.role === 'user').length}\n`;
-  output += `Assistant turns: ${messages.filter(m => m.role === 'assistant').length}\n\n`;
+  output += `Total Messages: ${messages.length}\n`;
+  output += `User: ${messages.filter(m => m.role === 'user').length} | Assistant: ${messages.filter(m => m.role === 'assistant').length}\n\n`;
   
-  if (questions.length > 0) {
-    output += `Questions Asked:\n${questions.slice(0, 5).map(q => `- ${q}`).join('\n')}\n\n`;
+  if (decisions.length > 0) {
+    output += `Decisions:\n${decisions.slice(0, 3).map(d => `- ${d}`).join('\n')}\n\n`;
   }
   
-  output += 'Note: For AI-assisted condensing, use "condense with AI" command.';
+  if (actions.length > 0) {
+    output += `Actions/Next Steps:\n${actions.slice(0, 5).map(a => `- ${a}`).join('\n')}\n\n`;
+  }
+  
+  if (questions.length > 0) {
+    output += `Questions:\n${questions.slice(0, 5).map(q => `- ${q}`).join('\n')}\n\n`;
+  }
+  
+  if (facts.length > 0) {
+    output += `Key Points:\n${facts.slice(0, 5).map(f => `- ${f.trim()}`).join('\n')}\n\n`;
+  }
+  
+  output += '\n💡 Tip: Use "condense with AI" for deeper analysis';
   
   return output;
 };
