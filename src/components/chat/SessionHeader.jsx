@@ -140,12 +140,12 @@ export default function SessionHeader({
                 key={level.value}
                 onClick={() => onUpdateInsights(level.value)}
                 className={cn(
-                  "flex flex-col items-start py-2 cursor-pointer",
+                  "flex flex-col items-start py-2 cursor-pointer text-zinc-200 hover:text-white focus:text-white",
                   vault?.live_insights_level === level.value && "bg-zinc-800"
                 )}
               >
                 <span className="text-sm text-white">{level.label}</span>
-                <span className="text-[11px] text-zinc-500">{level.desc}</span>
+                <span className="text-[11px] text-zinc-400">{level.desc}</span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -169,14 +169,14 @@ export default function SessionHeader({
               Quick Copy
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-zinc-800" />
-            <DropdownMenuItem onClick={onCopyLivingSummary} className="cursor-pointer">
+            <DropdownMenuItem onClick={onCopyLivingSummary} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
               <BookOpen className="h-4 w-4 mr-2 text-blue-400" />
               Living Summary
             </DropdownMenuItem>
             <DropdownMenuItem 
               onClick={onCopySessionThread} 
               disabled={!hasMessages}
-              className="cursor-pointer"
+              className="cursor-pointer text-zinc-200 hover:text-white focus:text-white"
             >
               <MessageSquare className="h-4 w-4 mr-2 text-emerald-400" />
               Session Thread
@@ -184,7 +184,7 @@ export default function SessionHeader({
             <DropdownMenuItem 
               onClick={onCopyContextPack}
               disabled={!lastContextPack}
-              className="cursor-pointer"
+              className="cursor-pointer text-zinc-200 hover:text-white focus:text-white"
             >
               <Sparkles className="h-4 w-4 mr-2 text-violet-400" />
               Context Pack
@@ -204,31 +204,31 @@ export default function SessionHeader({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48 bg-zinc-900 border-zinc-800">
-            <DropdownMenuItem onClick={onShowImport} className="cursor-pointer">
+            <DropdownMenuItem onClick={onShowImport} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
               <Download className="h-4 w-4 mr-2 text-emerald-400" />
               Import Web Chat
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onShowExport} className="cursor-pointer">
+            <DropdownMenuItem onClick={onShowExport} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
               <Download className="h-4 w-4 mr-2 text-blue-400" />
               Export Context Pack
             </DropdownMenuItem>
             {onShowEpiChat && (
-              <DropdownMenuItem onClick={onShowEpiChat} className="cursor-pointer">
+              <DropdownMenuItem onClick={onShowEpiChat} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
                 <Sparkles className="h-4 w-4 mr-2 text-violet-400" />
                 Talk to Epi
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator className="bg-zinc-800" />
-            <DropdownMenuItem onClick={onShowGuardian} className="cursor-pointer">
+            <DropdownMenuItem onClick={onShowGuardian} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
               <Shield className="h-4 w-4 mr-2 text-violet-400" />
               Vault Guardian
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-zinc-800" />
-            <DropdownMenuItem onClick={onShowCalendar} className="cursor-pointer">
+            <DropdownMenuItem onClick={onShowCalendar} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
               <Calendar className="h-4 w-4 mr-2 text-blue-400" />
               Export Calendar
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onShowEmail} className="cursor-pointer">
+            <DropdownMenuItem onClick={onShowEmail} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
               <Mail className="h-4 w-4 mr-2 text-emerald-400" />
               Draft Email
             </DropdownMenuItem>
