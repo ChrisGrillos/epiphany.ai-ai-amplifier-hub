@@ -28,6 +28,13 @@ import EpiChat from '@/components/epi/EpiChat';
 import EpiNudge from '@/components/epi/EpiNudge';
 import EpiAvatar from '@/components/epi/EpiAvatar';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
+import { 
+  detectWebChatPaste, 
+  parseWebChat, 
+  condenseWebChatLocal,
+  prepareContextPackFromVault,
+  generateVaultSnapshot 
+} from '@/components/epi/epiPasteUtils';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
@@ -76,6 +83,8 @@ export default function Home() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
+  const [activeTab, setActiveTab] = useState('api');
+  const [lastContextPack, setLastContextPack] = useState(null);
   
   // Modals
   const [showCreateVault, setShowCreateVault] = useState(false);
@@ -197,23 +206,103 @@ export default function Home() {
     toast.success('API key saved');
   };
 
-  const handleSendMessage = async ({ content, image_urls }) => {
-    if (!apiKey) {
-      setShowApiKeySetup(true);
-      toast.error('Please configure your API key first');
-      return;
-    }
-
+  const handleSendMessage = async ({ content, image_urls, target = 'api' }) => {
     const userMessage = {
       role: 'user',
       content,
       image_urls,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      target
     };
 
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     setStreamingContent('');
+
+    // Route to appropriate handler
+    if (target === 'epi') {
+      await handleEpiMessage(userMessage);
+    } else {
+      await handleApiMessage(userMessage);
+    }
+  };
+
+  const handleEpiMessage = async (userMessage) => {
+    try {
+      const content = userMessage.content;
+      let responseContent = '';
+
+      // Check if it's a web chat paste
+      if (detectWebChatPaste(content)) {
+        const parsedMessages = parseWebChat(content);
+        responseContent = condenseWebChatLocal(parsedMessages);
+        
+        // Log action
+        await logEpiAction(activeVault.id, 'condense_paste', epiLevel, 
+          { chars_in: content.length, chars_out: responseContent.length, used_llm: false },
+          'Local parse complete'
+        );
+      }
+      // Check for context pack request
+      else if (content.toLowerCase().includes('context pack') || 
+               content.toLowerCase().includes('prep') ||
+               content.toLowerCase().includes('prepare')) {
+        responseContent = prepareContextPackFromVault(activeVault, references, messages);
+        setLastContextPack(responseContent);
+        
+        await logEpiAction(activeVault.id, 'prepare_context_pack', epiLevel,
+          { reference_count: references.length },
+          'Context pack prepared'
+        );
+      }
+      // Check for vault snapshot request
+      else if (content.toLowerCase().includes('summarize') ||
+               content.toLowerCase().includes('snapshot') ||
+               content.toLowerCase().includes('catch me up')) {
+        const sessions = await base44.entities.Session.filter({ vault_id: activeVault.id }, '-created_date', 1);
+        responseContent = generateVaultSnapshot(activeVault, sessions);
+        
+        await logEpiAction(activeVault.id, 'vault_snapshot', epiLevel, {}, 'Snapshot generated');
+      }
+      // Default: Use LLM for general Epi queries
+      else {
+        const context = `Current Vault: ${activeVault?.name}\n\nLiving Summary:\n${activeVault?.living_summary || '(empty)'}`;
+        
+        responseContent = await base44.integrations.Core.InvokeLLM({
+          prompt: `You are Epi, the concierge intelligence for Epiphany.AI. You help coordinate context between AI systems.\n\n${context}\n\nUser: ${content}`
+        });
+        
+        // Normalize response
+        responseContent = responseContent.text || responseContent.output || responseContent.response || String(responseContent);
+        
+        await logEpiAction(activeVault.id, 'user_query', epiLevel,
+          { query: content, used_llm: true },
+          responseContent
+        );
+      }
+
+      const assistantMessage = {
+        role: 'assistant',
+        content: responseContent,
+        timestamp: new Date().toISOString(),
+        target: 'epi'
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      toast.error('Epi response failed');
+      console.error(error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleApiMessage = async (userMessage) => {
+    if (!apiKey) {
+      setShowApiKeySetup(true);
+      toast.error('Please configure your API key first');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       // Build system prompt with Living Summary + Selected References
@@ -282,7 +371,8 @@ PROPOSE_FILE_UPDATE: <filename>
       const assistantMessage = {
         role: 'assistant',
         content: response.replace(/PROPOSE_FILE_UPDATE:[\s\S]+/, '').trim() || 'I\'ve proposed changes to the reference file.',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        target: 'api'
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -606,6 +696,31 @@ If no issues, return: {"status": "ok", "notes": []}`;
     }
   };
 
+  const handleCopyLivingSummary = () => {
+    navigator.clipboard.writeText(activeVault?.living_summary || '');
+    toast.success('Living Summary copied');
+  };
+
+  const handleCopySessionThread = () => {
+    const thread = messages.map(m => 
+      `${m.role === 'user' ? 'User' : m.target === 'epi' ? 'Epi' : 'Assistant'}: ${m.content}`
+    ).join('\n\n');
+    navigator.clipboard.writeText(thread);
+    toast.success('Session thread copied');
+  };
+
+  const handleCopyContextPack = () => {
+    if (lastContextPack) {
+      navigator.clipboard.writeText(lastContextPack);
+      toast.success('Context pack copied');
+    } else {
+      const pack = prepareContextPackFromVault(activeVault, references, messages);
+      setLastContextPack(pack);
+      navigator.clipboard.writeText(pack);
+      toast.success('Context pack generated and copied');
+    }
+  };
+
   const handleExportContextPack = () => {
     const pack = prepareContextPack(activeVault, references, messages, '');
     navigator.clipboard.writeText(pack);
@@ -665,6 +780,10 @@ If no issues, return: {"status": "ok", "notes": []}`;
               onShowEmail={() => setShowEmailDraft(true)}
               hasMessages={messages.length > 0}
               referencesCount={references.length}
+              onCopyLivingSummary={handleCopyLivingSummary}
+              onCopySessionThread={handleCopySessionThread}
+              onCopyContextPack={handleCopyContextPack}
+              lastContextPack={lastContextPack}
             />
 
             {/* Messages */}
@@ -705,17 +824,20 @@ If no issues, return: {"status": "ok", "notes": []}`;
                   references={references}
                   selectedIds={selectedReferenceIds}
                   onToggle={toggleReferenceSelection}
-                  disabled={!apiKey || isLoading}
+                  disabled={(activeTab === 'api' && !apiKey) || isLoading}
                 />
               </div>
               <ChatInput
                 onSend={handleSendMessage}
-                disabled={!apiKey}
+                disabled={activeTab === 'api' && !apiKey}
                 isLoading={isLoading || isSynthesizing}
+                epiLevel={epiLevel}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
                 placeholder={
-                  !apiKey 
-                    ? "Configure your API key to start..." 
-                    : "Start thinking with Epiphany..."
+                  activeTab === 'api' 
+                    ? (!apiKey ? "Configure your API key to start..." : "Message Grok…")
+                    : "Talk to Epi… (paste a web chat, request a context pack, or ask for a vault summary)"
                 }
               />
             </div>

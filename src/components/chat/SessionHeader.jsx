@@ -13,7 +13,9 @@ import {
   Shield,
   Calendar,
   Mail,
-  MoreHorizontal
+  MoreHorizontal,
+  Copy,
+  MessageSquare
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -47,7 +49,11 @@ export default function SessionHeader({
   onShowEmail,
   onShowEpiChat,
   hasMessages,
-  referencesCount = 0
+  referencesCount = 0,
+  onCopyLivingSummary,
+  onCopySessionThread,
+  onCopyContextPack,
+  lastContextPack
 }) {
   const currentLevel = insightLevels.find(l => l.value === vault?.live_insights_level) || insightLevels[0];
 
@@ -142,6 +148,47 @@ export default function SessionHeader({
                 <span className="text-[11px] text-zinc-500">{level.desc}</span>
               </DropdownMenuItem>
             ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Copy Actions */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-zinc-400 hover:text-white hover:bg-zinc-800"
+            >
+              <Copy className="h-4 w-4 mr-1.5" />
+              <span className="text-xs">Copy</span>
+              <ChevronDown className="h-3 w-3 ml-1" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52 bg-zinc-900 border-zinc-800">
+            <DropdownMenuLabel className="text-xs text-zinc-500">
+              Quick Copy
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-zinc-800" />
+            <DropdownMenuItem onClick={onCopyLivingSummary} className="cursor-pointer">
+              <BookOpen className="h-4 w-4 mr-2 text-blue-400" />
+              Living Summary
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={onCopySessionThread} 
+              disabled={!hasMessages}
+              className="cursor-pointer"
+            >
+              <MessageSquare className="h-4 w-4 mr-2 text-emerald-400" />
+              Session Thread
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={onCopyContextPack}
+              disabled={!lastContextPack}
+              className="cursor-pointer"
+            >
+              <Sparkles className="h-4 w-4 mr-2 text-violet-400" />
+              Context Pack
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 

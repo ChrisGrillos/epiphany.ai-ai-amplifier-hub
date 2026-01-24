@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Send, ImagePlus, Paperclip, X, Loader2 } from 'lucide-react';
+import { Send, ImagePlus, Paperclip, X, Loader2, Sparkles, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,10 @@ export default function ChatInput({
   onSend, 
   disabled, 
   placeholder = "Type your message...",
-  isLoading 
+  isLoading,
+  epiLevel = 1,
+  activeTab = 'api',
+  onTabChange
 }) {
   const [message, setMessage] = useState('');
   const [images, setImages] = useState([]);
@@ -18,13 +21,16 @@ export default function ChatInput({
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
 
+  const showTabs = epiLevel >= 3;
+
   const handleSubmit = () => {
     if (!message.trim() && images.length === 0) return;
     if (disabled || isLoading) return;
 
     onSend({
       content: message.trim(),
-      image_urls: images
+      image_urls: images,
+      target: activeTab
     });
     setMessage('');
     setImages([]);
@@ -60,8 +66,45 @@ export default function ChatInput({
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const getPlaceholder = () => {
+    if (activeTab === 'epi') {
+      return 'Talk to Epi… (paste a web chat, request a context pack, or ask for a vault summary)';
+    }
+    return placeholder || 'Message Grok…';
+  };
+
   return (
     <div className="border-t border-zinc-800/50 bg-zinc-950/50 p-4">
+      {/* Tabs */}
+      {showTabs && (
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => onTabChange('api')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              activeTab === 'api'
+                ? 'bg-violet-600 text-white shadow-lg'
+                : 'bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-800'
+            )}
+          >
+            <Zap className="h-4 w-4" />
+            API
+          </button>
+          <button
+            onClick={() => onTabChange('epi')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+              activeTab === 'epi'
+                ? 'bg-violet-600 text-white shadow-lg'
+                : 'bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-800'
+            )}
+          >
+            <Sparkles className="h-4 w-4" />
+            Epi
+          </button>
+        </div>
+      )}
+
       {/* Image previews */}
       {images.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-3">
@@ -115,7 +158,7 @@ export default function ChatInput({
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={getPlaceholder()}
             disabled={disabled}
             rows={1}
             className={cn(
