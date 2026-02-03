@@ -153,7 +153,7 @@ export default function Home() {
     queryFn: () => base44.entities.Vault.list('-last_accessed'),
   });
 
-  const { data: references = [] } = useQuery({
+  const { data: references = [], refetch } = useQuery({
     queryKey: ['references', activeVault?.id],
     queryFn: () => activeVault ? base44.entities.Reference.filter({ vault_id: activeVault.id }) : [],
     enabled: !!activeVault,
