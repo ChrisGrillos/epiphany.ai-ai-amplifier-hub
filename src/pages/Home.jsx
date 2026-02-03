@@ -36,6 +36,13 @@ import {
   generateVaultSnapshot 
 } from '@/components/epi/epiPasteUtils';
 import { estimateTokens, needsLLMAssist, truncateToTokenLimit } from '@/components/epi/tokenUtils';
+import { 
+  SessionManager, 
+  shouldAutoCloseSession, 
+  generateSessionSummary, 
+  suggestNextActions,
+  generateSessionTitle 
+} from '@/components/session/sessionManager';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
@@ -119,6 +126,10 @@ export default function Home() {
   const [epiLevel, setEpiLevel] = useState(1);
   const [epiNudge, setEpiNudge] = useState(null);
   const [appSettings, setAppSettings] = useState(null);
+  
+  // Session Manager
+  const sessionManagerRef = useRef(null);
+  const [sessionAutoSaved, setSessionAutoSaved] = useState(false);
 
   // API Key stored in localStorage
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('grok_api_key') || '');
@@ -157,6 +168,90 @@ export default function Home() {
       setEpiLevel(getEffectiveEpiLevel(activeVault, appSettings));
     }
   }, [activeVault, appSettings]);
+
+  // Session Management - Auto-save and Auto-close
+  useEffect(() => {
+    if (activeVault && activeSession && messages.length > 0) {
+      // Start session manager
+      if (!sessionManagerRef.current) {
+        sessionManagerRef.current = new SessionManager(
+          activeVault,
+          // Auto-save handler
+          async () => {
+            if (messages.length > 0) {
+              try {
+                // Update session in background
+                const title = generateSessionTitle(messages);
+                await base44.entities.Session.create({
+                  vault_id: activeVault.id,
+                  title: `${title} (auto-saved)`,
+                  messages,
+                  status: 'active',
+                  started_at: activeSession.started_at,
+                  attached_reference_ids: selectedReferenceIds,
+                });
+                setSessionAutoSaved(true);
+                setTimeout(() => setSessionAutoSaved(false), 2000);
+              } catch (error) {
+                console.error('Auto-save failed:', error);
+              }
+            }
+          },
+          // Auto-close handler
+          async () => {
+            if (shouldAutoCloseSession(activeSession, messages)) {
+              // Generate summary
+              const summary = generateSessionSummary(messages, references.filter(r => selectedReferenceIds.includes(r.id)));
+              const nextActions = suggestNextActions(summary, activeVault);
+              
+              // Save session
+              const title = generateSessionTitle(messages);
+              await base44.entities.Session.create({
+                vault_id: activeVault.id,
+                title: `${title} (auto-closed)`,
+                messages,
+                status: 'completed',
+                started_at: activeSession.started_at,
+                ended_at: new Date().toISOString(),
+                attached_reference_ids: selectedReferenceIds,
+              });
+              
+              // Log Epi action
+              await logEpiAction(activeVault.id, 'session_end', epiLevel,
+                { auto_closed: true, message_count: messages.length },
+                summary
+              );
+              
+              // Show notification with suggestions
+              toast.info('Session auto-closed due to inactivity', {
+                description: nextActions.length > 0 ? nextActions[0].description : 'Session saved to history'
+              });
+              
+              // Reset session
+              setMessages([]);
+              setActiveSession(null);
+              setSelectedReferenceIds([]);
+              
+              // Stop session manager
+              if (sessionManagerRef.current) {
+                sessionManagerRef.current.stop();
+                sessionManagerRef.current = null;
+              }
+            }
+          }
+        );
+        sessionManagerRef.current.start();
+      }
+    }
+    
+    // Cleanup on unmount or vault change
+    return () => {
+      if (sessionManagerRef.current) {
+        sessionManagerRef.current.stop();
+        sessionManagerRef.current = null;
+      }
+    };
+  }, [activeVault, activeSession, messages.length]);
 
   // Scroll to bottom
   useEffect(() => {
@@ -219,6 +314,11 @@ export default function Home() {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     setStreamingContent('');
+
+    // Reset session manager timer on new message
+    if (sessionManagerRef.current) {
+      sessionManagerRef.current.reset();
+    }
 
     // Route to appropriate handler
     if (target === 'epi') {
@@ -857,6 +957,11 @@ If no issues, return: {"status": "ok", "notes": []}`;
                   onToggle={toggleReferenceSelection}
                   disabled={(activeTab === 'api' && !apiKey) || isLoading}
                 />
+                {sessionAutoSaved && (
+                  <div className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-xs text-emerald-400">
+                    Session auto-saved
+                  </div>
+                )}
               </div>
               <ChatInput
                 onSend={handleSendMessage}
