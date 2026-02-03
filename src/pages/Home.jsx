@@ -1081,6 +1081,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
               onShowEpiChat={epiLevel >= 3 ? () => setShowEpiChat(true) : null}
               onShowCalendar={() => setShowCalendarExport(true)}
               onShowEmail={() => setShowEmailDraft(true)}
+              onShowArchival={() => setShowArchival(true)}
               hasMessages={messages.length > 0}
               referencesCount={references.length}
               onCopyLivingSummary={handleCopyLivingSummary}
