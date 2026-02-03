@@ -116,6 +116,7 @@ export default function Home() {
   const [showEpiSettings, setShowEpiSettings] = useState(false);
   const [showEpiChat, setShowEpiChat] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState('chat');
+  const [showArchival, setShowArchival] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
