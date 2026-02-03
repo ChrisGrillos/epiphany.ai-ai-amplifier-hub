@@ -28,6 +28,8 @@ import EpiChat from '@/components/epi/EpiChat';
 import EpiNudge from '@/components/epi/EpiNudge';
 import EpiAvatar from '@/components/epi/EpiAvatar';
 import MoltbookHub from '@/components/moltbook/MoltbookHub';
+import OnboardingTutorial from '@/components/tutorial/OnboardingTutorial';
+import QuickTips from '@/components/tutorial/QuickTips';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { 
   detectWebChatPaste, 
@@ -134,6 +136,11 @@ export default function Home() {
   // Session Manager
   const sessionManagerRef = useRef(null);
   const [sessionAutoSaved, setSessionAutoSaved] = useState(false);
+  
+  // Tutorial
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [showQuickTips, setShowQuickTips] = useState(false);
+  const [tutorialProgress, setTutorialProgress] = useState(null);
 
   // API Key stored in localStorage
   const [apiKey, setApiKey] = useState(() => localStorage.getItem('grok_api_key') || '');
@@ -150,7 +157,7 @@ export default function Home() {
     enabled: !!activeVault,
   });
 
-  // Load app settings for Epi
+  // Load app settings for Epi and tutorial progress
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -159,12 +166,38 @@ export default function Home() {
           setAppSettings(settings[0]);
           setEpiLevel(getEffectiveEpiLevel(activeVault, settings[0]));
         }
+        
+        // Load tutorial progress
+        const progress = await base44.entities.TutorialProgress.list();
+        if (progress.length > 0) {
+          setTutorialProgress(progress[0]);
+          if (progress[0].tutorial_active && !progress[0].dismissed) {
+            setShowTutorial(true);
+          }
+        } else {
+          // First time user - create progress and show tutorial
+          const newProgress = await base44.entities.TutorialProgress.create({
+            tutorial_active: true,
+            completed_steps: [],
+            current_step: 'welcome'
+          });
+          setTutorialProgress(newProgress);
+          setShowTutorial(true);
+        }
       } catch (error) {
         console.error('Failed to load settings:', error);
       }
     };
     loadSettings();
   }, []);
+  
+  // Show quick tips after tutorial completion
+  useEffect(() => {
+    if (tutorialProgress && !tutorialProgress.tutorial_active && !tutorialProgress.dismissed) {
+      const timer = setTimeout(() => setShowQuickTips(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [tutorialProgress]);
 
   // Update Epi level when vault changes
   useEffect(() => {
@@ -930,6 +963,34 @@ If no issues, return: {"status": "ok", "notes": []}`;
     );
   };
 
+  const handleUpdateTutorialProgress = async (stepId) => {
+    if (!tutorialProgress) return;
+    try {
+      const updated = await base44.entities.TutorialProgress.update(tutorialProgress.id, {
+        current_step: stepId,
+        completed_steps: [...new Set([...tutorialProgress.completed_steps, stepId])]
+      });
+      setTutorialProgress(updated);
+    } catch (error) {
+      console.error('Failed to update tutorial progress:', error);
+    }
+  };
+
+  const handleCompleteTutorial = async () => {
+    if (!tutorialProgress) return;
+    try {
+      await base44.entities.TutorialProgress.update(tutorialProgress.id, {
+        tutorial_active: false,
+        dismissed: true
+      });
+      setShowTutorial(false);
+      toast.success('Tutorial completed! 🎉');
+      setTimeout(() => setShowQuickTips(true), 1000);
+    } catch (error) {
+      console.error('Failed to complete tutorial:', error);
+    }
+  };
+
   // Render
   if (vaultsLoading) {
     return (
@@ -1233,6 +1294,20 @@ If no issues, return: {"status": "ok", "notes": []}`;
       <div className="fixed bottom-6 left-6 z-50">
         <EpiAvatar onClick={() => setShowEpiSettings(true)} />
       </div>
+
+      {/* Tutorial */}
+      <OnboardingTutorial
+        open={showTutorial}
+        onOpenChange={setShowTutorial}
+        tutorialProgress={tutorialProgress}
+        onUpdateProgress={handleUpdateTutorialProgress}
+        onComplete={handleCompleteTutorial}
+      />
+
+      {/* Quick Tips */}
+      {showQuickTips && (
+        <QuickTips onDismiss={() => setShowQuickTips(false)} />
+      )}
     </div>
   );
 }
