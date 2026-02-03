@@ -26,6 +26,7 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { Archive } from 'lucide-react';
 
 const insightLevels = [
   { value: 'off', label: 'Off', desc: 'No external lookups' },
@@ -48,6 +49,7 @@ export default function SessionHeader({
   onShowCalendar,
   onShowEmail,
   onShowEpiChat,
+  onShowArchival,
   hasMessages,
   referencesCount = 0,
   onCopyLivingSummary,
@@ -222,6 +224,10 @@ export default function SessionHeader({
             <DropdownMenuItem onClick={onShowGuardian} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
               <Shield className="h-4 w-4 mr-2 text-violet-400" />
               Vault Guardian
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onShowArchival} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">
+              <Archive className="h-4 w-4 mr-2 text-amber-400" />
+              Archive References
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-zinc-800" />
             <DropdownMenuItem onClick={onShowCalendar} className="cursor-pointer text-zinc-200 hover:text-white focus:text-white">

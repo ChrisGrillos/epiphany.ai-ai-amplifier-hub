@@ -30,6 +30,8 @@ import EpiAvatar from '@/components/epi/EpiAvatar';
 import MoltbookHub from '@/components/moltbook/MoltbookHub';
 import OnboardingTutorial from '@/components/tutorial/OnboardingTutorial';
 import QuickTips from '@/components/tutorial/QuickTips';
+import BridgeConversations from '@/components/bridge/BridgeConversations';
+import ReferenceArchival from '@/components/references/ReferenceArchival';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { 
   detectWebChatPaste, 
@@ -1036,6 +1038,16 @@ If no issues, return: {"status": "ok", "notes": []}`;
               >
                 Moltbook Agents
               </button>
+              <button
+                onClick={() => setActiveMainTab('bridge')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                  activeMainTab === 'bridge'
+                    ? 'bg-zinc-900 text-white border-t border-x border-zinc-800'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Bridge
+              </button>
             </div>
           </div>
         )}
@@ -1050,6 +1062,8 @@ If no issues, return: {"status": "ok", "notes": []}`;
           </DragScrollArea>
         ) : activeMainTab === 'moltbook' ? (
           <MoltbookHub activeVault={activeVault} />
+        ) : activeMainTab === 'bridge' ? (
+          <BridgeConversations vault={activeVault} />
         ) : (
           <>
             {/* Header */}
@@ -1308,6 +1322,18 @@ If no issues, return: {"status": "ok", "notes": []}`;
       {showQuickTips && (
         <QuickTips onDismiss={() => setShowQuickTips(false)} />
       )}
+
+      {/* Reference Archival */}
+      <ReferenceArchival
+        open={showArchival}
+        onOpenChange={setShowArchival}
+        vaultId={activeVault?.id}
+        references={references}
+        onArchiveComplete={() => {
+          refetch();
+          toast.success('References archived successfully');
+        }}
+      />
     </div>
   );
 }
