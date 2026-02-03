@@ -43,6 +43,8 @@ import {
   suggestNextActions,
   generateSessionTitle 
 } from '@/components/session/sessionManager';
+import { analyzeVaultHealth, getVaultHealthScore, formatHealthReport } from '@/components/epi/vaultHealth';
+import { analyzeWorkflowDelegation, prepareAgentContext, generateOrchestrationMessage, shouldAutoExecuteWorkflow } from '@/components/epi/workflowOrchestration';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
@@ -334,6 +336,48 @@ export default function Home() {
       let responseContent = '';
       let usedLLM = false;
 
+      // Analyze for workflow delegation
+      const delegations = analyzeWorkflowDelegation(userMessage, activeVault, references);
+      if (delegations.length > 0 && !content.toLowerCase().includes('vault health')) {
+        const primaryDelegation = delegations[0];
+        
+        // If it should be routed to API, suggest switching
+        if (primaryDelegation.agent === 'api' && !shouldAutoExecuteWorkflow(primaryDelegation, epiLevel)) {
+          responseContent = generateOrchestrationMessage(delegations);
+          responseContent += `\n\nSwitch to the **API** tab to execute this task with full context.`;
+          
+          await logEpiAction(activeVault.id, 'workflow_suggestion', epiLevel,
+            { task_type: primaryDelegation.task_type, suggested_agent: 'api' },
+            'Suggested API delegation'
+          );
+          
+          const assistantMessage = {
+            role: 'assistant',
+            content: responseContent,
+            timestamp: new Date().toISOString(),
+            target: 'epi'
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Check for vault health request
+      if (content.toLowerCase().includes('vault health') || 
+          content.toLowerCase().includes('check vault') ||
+          content.toLowerCase().includes('cleanup')) {
+        toast.info('Analyzing vault health...');
+        const sessions = await base44.entities.Session.filter({ vault_id: activeVault.id });
+        const recommendations = await analyzeVaultHealth(activeVault, sessions, references);
+        const healthScore = getVaultHealthScore(recommendations);
+        responseContent = formatHealthReport(activeVault, recommendations, healthScore);
+        
+        await logEpiAction(activeVault.id, 'vault_health_check', epiLevel,
+          { score: healthScore, recommendations: recommendations.length },
+          'Health check complete'
+        );
+      }
       // Check if it's a web chat paste
       if (detectWebChatPaste(content)) {
         const parsedMessages = parseWebChat(content);
@@ -436,6 +480,13 @@ Key Points:
     }
 
     try {
+      // Check if Epi should provide orchestration guidance
+      if (epiLevel >= 3) {
+        const delegations = analyzeWorkflowDelegation(userMessage, activeVault, references);
+        if (delegations.length > 0 && delegations[0].agent === 'epi') {
+          toast.info('Epi suggests handling this internally - switch to Epi tab', { duration: 4000 });
+        }
+      }
       // Build system prompt with Living Summary + Selected References
       let contextText = `Context from Living Summary:\n${activeVault?.living_summary || 'No summary yet.'}`;
       
@@ -596,9 +647,22 @@ PROPOSE_FILE_UPDATE: <filename>
       
       // Generate Level 4 nudge if appropriate
       if (epiLevel === 4) {
-        setTimeout(() => {
+        setTimeout(async () => {
           const nudge = generateProactiveNudge(activeVault, [], references);
-          if (nudge) setEpiNudge(nudge);
+          if (nudge) {
+            setEpiNudge(nudge);
+          } else {
+            // Check vault health periodically
+            const sessions = await base44.entities.Session.filter({ vault_id: activeVault.id });
+            const recommendations = await analyzeVaultHealth(activeVault, sessions, references);
+            if (recommendations.length > 0 && recommendations.some(r => r.severity === 'high' || r.severity === 'medium')) {
+              setEpiNudge({
+                type: 'vault_health',
+                message: `Vault health check: ${recommendations[0].title}`,
+                severity: recommendations[0].severity
+              });
+            }
+          }
         }, 2000);
       }
     } catch (error) {
