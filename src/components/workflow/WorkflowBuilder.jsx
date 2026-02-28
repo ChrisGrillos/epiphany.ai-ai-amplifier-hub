@@ -9,7 +9,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Play, Save, Loader2, GitBranch } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
-import { nanoid } from 'nanoid';
 import WorkflowStepEditor from './WorkflowStepEditor';
 import WorkflowRunner from './WorkflowRunner';
 import { runWorkflow } from '@/components/epi/workflowEngine';
@@ -20,8 +19,7 @@ const TRIGGERS = [
   { value: 'on_reference_added',   label: 'When a reference is added' },
 ];
 
-const nanoidFallback = () => Math.random().toString(36).slice(2, 10);
-const uid = () => { try { return nanoid(8); } catch { return nanoidFallback(); } };
+const uid = () => Math.random().toString(36).slice(2, 10);
 
 export default function WorkflowBuilder({ open, onOpenChange, vault, moltbookAgents = [], onSave, existingWorkflow }) {
   const isEditing = !!existingWorkflow;
