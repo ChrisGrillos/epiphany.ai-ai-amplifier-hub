@@ -1346,6 +1346,18 @@ If no issues, return: {"status": "ok", "notes": []}`;
         <QuickTips onDismiss={() => setShowQuickTips(false)} />
       )}
 
+      {/* Multi API Key Setup */}
+      <MultiApiKeySetup
+        open={showMultiApiSetup}
+        onOpenChange={setShowMultiApiSetup}
+        onProviderChange={(p) => {
+          // sync active provider with existing apiKey state
+          const { getApiKeys } = require('@/components/epi/workflowEngine');
+          const keys = getApiKeys();
+          if (p === 'grok' && keys.grok) setApiKey(keys.grok);
+        }}
+      />
+
       {/* Reference Archival */}
       <ReferenceArchival
         open={showArchival}
