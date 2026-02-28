@@ -1404,6 +1404,12 @@ If no issues, return: {"status": "ok", "notes": []}`;
         }}
       />
 
+      {/* Cross-Model Merge Layer */}
+      <CrossModelMergeLayer
+        open={showMergeLayer}
+        onOpenChange={setShowMergeLayer}
+      />
+
       {/* Reference Archival */}
       <ReferenceArchival
         open={showArchival}
