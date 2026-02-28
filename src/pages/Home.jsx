@@ -35,6 +35,7 @@ import QuickTips from '@/components/tutorial/QuickTips';
 import BridgeConversations from '@/components/bridge/BridgeConversations';
 import ReferenceArchival from '@/components/references/ReferenceArchival';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
+import { getApiKeys, getActiveProvider } from '@/components/epi/workflowEngine';
 import { 
   detectWebChatPaste, 
   parseWebChat, 
