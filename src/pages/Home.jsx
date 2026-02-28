@@ -1345,9 +1345,18 @@ If no issues, return: {"status": "ok", "notes": []}`;
         />
       )}
 
-      {/* Epi Avatar - Bottom Left Corner */}
+      {/* Epi Avatar - Bottom Left Corner — reactive state */}
       <div className="fixed bottom-6 left-6 z-50">
-        <EpiAvatar onClick={() => setShowEpiSettings(true)} />
+        <EpiAvatar
+          onClick={() => setShowEpiSettings(true)}
+          state={
+            epiNudge
+              ? 'alert'
+              : isLoading || isSynthesizing
+              ? (activeTab === 'epi' ? 'thinking' : 'speaking')
+              : 'idle'
+          }
+        />
       </div>
 
       {/* Tutorial */}
