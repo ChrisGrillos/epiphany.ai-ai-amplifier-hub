@@ -111,7 +111,7 @@ export default function WelcomeScreen({ onCreateVault, onSetupApiKey, hasApiKey,
               className="w-full max-w-xs border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800 h-12"
             >
               <Shield className="h-4 w-4 mr-2" />
-              Configure Grok API Key
+              Configure Preferred API Key
             </Button>
           )}
           <Button
@@ -131,7 +131,7 @@ export default function WelcomeScreen({ onCreateVault, onSetupApiKey, hasApiKey,
           transition={{ delay: 1 }}
           className="text-xs text-zinc-600 mt-12"
         >
-          Powered by Grok (xAI) • Your patient, amplifying co-pilot
+          Powered by your preferred AI provider • Your patient, amplifying co-pilot
         </motion.p>
       </motion.div>
     </div>
