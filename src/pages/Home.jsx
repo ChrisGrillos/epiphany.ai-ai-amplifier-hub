@@ -28,6 +28,8 @@ import EpiChat from '@/components/epi/EpiChat';
 import EpiNudge from '@/components/epi/EpiNudge';
 import EpiAvatar from '@/components/epi/EpiAvatar';
 import MoltbookHub from '@/components/moltbook/MoltbookHub';
+import WorkflowsPanel from '@/components/workflow/WorkflowsPanel';
+import MultiApiKeySetup from '@/components/settings/MultiApiKeySetup';
 import OnboardingTutorial from '@/components/tutorial/OnboardingTutorial';
 import QuickTips from '@/components/tutorial/QuickTips';
 import BridgeConversations from '@/components/bridge/BridgeConversations';
@@ -117,6 +119,7 @@ export default function Home() {
   const [showEpiChat, setShowEpiChat] = useState(false);
   const [activeMainTab, setActiveMainTab] = useState('chat');
   const [showArchival, setShowArchival] = useState(false);
+  const [showMultiApiSetup, setShowMultiApiSetup] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
