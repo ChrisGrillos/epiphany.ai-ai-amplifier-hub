@@ -1103,7 +1103,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
           <DragScrollArea className="h-full" disabled={false}>
             <WelcomeScreen
               onCreateVault={() => setShowCreateVault(true)}
-              onSetupApiKey={() => setShowApiKeySetup(true)}
+              onSetupApiKey={() => setShowMultiApiSetup(true)}
               hasApiKey={!!apiKey}
               onOpenSummary={() => setShowSummary(true)}
               onEndSession={handleEndSession}
