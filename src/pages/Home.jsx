@@ -149,8 +149,12 @@ export default function Home() {
   const [showQuickTips, setShowQuickTips] = useState(false);
   const [tutorialProgress, setTutorialProgress] = useState(null);
 
-  // API Key stored in localStorage
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('grok_api_key') || '');
+  // API Key stored in localStorage — reads whichever provider is active
+  const [apiKey, setApiKey] = useState(() => {
+    const keys = getApiKeys();
+    const provider = getActiveProvider();
+    return keys[provider] || keys.grok || '';
+  });
 
   // Queries
   const { data: vaults = [], isLoading: vaultsLoading } = useQuery({
