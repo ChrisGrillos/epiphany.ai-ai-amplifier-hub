@@ -123,6 +123,7 @@ export default function Home() {
   const [activeMainTab, setActiveMainTab] = useState('chat');
   const [showArchival, setShowArchival] = useState(false);
   const [showMultiApiSetup, setShowMultiApiSetup] = useState(false);
+  const [showMergeLayer, setShowMergeLayer] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
