@@ -1103,7 +1103,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
         ) : activeMainTab === 'bridge' ? (
           <BridgeConversations vault={activeVault} />
         ) : activeMainTab === 'workflows' ? (
-          <WorkflowsPanel vault={activeVault} moltbookAgents={[]} />
+          <WorkflowsPanel vault={activeVault} />
         ) : (
           <>
             {/* Header */}
