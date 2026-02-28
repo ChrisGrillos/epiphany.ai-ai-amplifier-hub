@@ -1130,6 +1130,14 @@ If no issues, return: {"status": "ok", "notes": []}`;
               lastContextPack={lastContextPack}
             />
 
+            {/* Context Indicator */}
+            <ContextIndicator
+              vault={activeVault}
+              references={references}
+              selectedIds={selectedReferenceIds}
+              messages={messages}
+            />
+
             {/* Messages */}
             <div className="flex-1 overflow-hidden">
               {messages.length === 0 ? (
