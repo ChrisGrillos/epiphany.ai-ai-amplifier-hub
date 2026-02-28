@@ -1352,8 +1352,6 @@ If no issues, return: {"status": "ok", "notes": []}`;
         open={showMultiApiSetup}
         onOpenChange={setShowMultiApiSetup}
         onProviderChange={(p) => {
-          // sync active provider with existing apiKey state
-          const { getApiKeys } = require('@/components/epi/workflowEngine');
           const keys = getApiKeys();
           if (p === 'grok' && keys.grok) setApiKey(keys.grok);
         }}
