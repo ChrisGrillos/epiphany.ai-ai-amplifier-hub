@@ -1052,6 +1052,22 @@ If no issues, return: {"status": "ok", "notes": []}`;
               >
                 Bridge
               </button>
+              <button
+                onClick={() => setActiveMainTab('workflows')}
+                className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                  activeMainTab === 'workflows'
+                    ? 'bg-zinc-900 text-white border-t border-x border-zinc-800'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Workflows
+              </button>
+              <button
+                onClick={() => setShowMultiApiSetup(true)}
+                className="ml-auto px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
+              >
+                <span>🔑</span> API Keys
+              </button>
             </div>
           </div>
         )}
