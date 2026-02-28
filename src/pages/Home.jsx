@@ -576,10 +576,18 @@ PROPOSE_FILE_UPDATE: <filename>
         ? `${conversationHistory}\n\nUser: ${content}`
         : content;
 
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: `${systemPrompt}\n\n${fullPrompt}`,
-        file_urls: image_urls?.length > 0 ? image_urls : undefined,
-      });
+      // Use the active provider (Grok, OpenAI, Anthropic, custom, or Base44)
+      let response;
+      const activeProvider = getActiveProvider();
+      if (activeProvider === 'base44') {
+        response = await base44.integrations.Core.InvokeLLM({
+          prompt: `${systemPrompt}\n\n${fullPrompt}`,
+          file_urls: image_urls?.length > 0 ? image_urls : undefined,
+        });
+      } else {
+        const { callLLMProvider } = await import('@/components/epi/workflowEngine');
+        response = await callLLMProvider(activeProvider, `${systemPrompt}\n\n${fullPrompt}`);
+      }
 
       // Check if AI proposes a file update
       if (response.includes('PROPOSE_FILE_UPDATE:')) {
