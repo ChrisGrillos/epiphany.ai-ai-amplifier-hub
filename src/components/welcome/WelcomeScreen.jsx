@@ -53,34 +53,48 @@ export default function WelcomeScreen({ onCreateVault, onSetupApiKey, hasApiKey,
           </p>
         </motion.div>
 
-        {/* Features */}
+        {/* Features — interactive */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="grid grid-cols-3 gap-6 my-12"
+          className="grid grid-cols-3 gap-4 my-12"
         >
-          <div className="text-center">
-            <div className="h-12 w-12 mx-auto rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3">
+          {/* Living Memory → opens Living Summary view */}
+          <button
+            onClick={onOpenSummary}
+            className="group text-center p-4 rounded-xl border border-transparent hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-all duration-200 cursor-pointer"
+          >
+            <div className="h-12 w-12 mx-auto rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-3 group-hover:border-emerald-400/50 group-hover:bg-emerald-500/15 transition-all">
               <Brain className="h-6 w-6 text-emerald-400" />
             </div>
-            <h3 className="text-sm font-medium text-white mb-1">Living Memory</h3>
-            <p className="text-xs text-zinc-500">Context that grows with you</p>
-          </div>
-          <div className="text-center">
-            <div className="h-12 w-12 mx-auto rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3">
+            <h3 className="text-sm font-medium text-white mb-1 group-hover:text-emerald-300 transition-colors">Living Memory</h3>
+            <p className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">View your Living Summary →</p>
+          </button>
+
+          {/* Smart Synthesis → triggers End Session / Synthesize */}
+          <button
+            onClick={onEndSession}
+            className="group text-center p-4 rounded-xl border border-transparent hover:border-amber-500/30 hover:bg-amber-500/5 transition-all duration-200 cursor-pointer"
+          >
+            <div className="h-12 w-12 mx-auto rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-3 group-hover:border-amber-400/50 group-hover:bg-amber-500/15 transition-all">
               <Zap className="h-6 w-6 text-amber-400" />
             </div>
-            <h3 className="text-sm font-medium text-white mb-1">Smart Synthesis</h3>
-            <p className="text-xs text-zinc-500">AI-powered session summaries</p>
-          </div>
-          <div className="text-center">
-            <div className="h-12 w-12 mx-auto rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3">
+            <h3 className="text-sm font-medium text-white mb-1 group-hover:text-amber-300 transition-colors">Smart Synthesis</h3>
+            <p className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">Synthesize session now →</p>
+          </button>
+
+          {/* Local First → opens API Key / privacy settings */}
+          <button
+            onClick={onSetupApiKey}
+            className="group text-center p-4 rounded-xl border border-transparent hover:border-blue-500/30 hover:bg-blue-500/5 transition-all duration-200 cursor-pointer"
+          >
+            <div className="h-12 w-12 mx-auto rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-3 group-hover:border-blue-400/50 group-hover:bg-blue-500/15 transition-all">
               <Shield className="h-6 w-6 text-blue-400" />
             </div>
-            <h3 className="text-sm font-medium text-white mb-1">Local First</h3>
-            <p className="text-xs text-zinc-500">Private & user-controlled</p>
-          </div>
+            <h3 className="text-sm font-medium text-white mb-1 group-hover:text-blue-300 transition-colors">Local First</h3>
+            <p className="text-xs text-zinc-500 group-hover:text-zinc-400 transition-colors">Manage your API keys →</p>
+          </button>
         </motion.div>
 
         {/* Actions */}
