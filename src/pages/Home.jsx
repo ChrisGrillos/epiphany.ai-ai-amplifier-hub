@@ -589,6 +589,11 @@ PROPOSE_FILE_UPDATE: <filename>
         response = await callLLMProvider(activeProvider, `${systemPrompt}\n\n${fullPrompt}`);
       }
 
+      // Normalize response to string
+      if (typeof response !== 'string') {
+        response = response.text || response.output || response.response || String(response);
+      }
+
       // Check if AI proposes a file update
       if (response.includes('PROPOSE_FILE_UPDATE:')) {
         const match = response.match(/PROPOSE_FILE_UPDATE:\s*(.+)\n([\s\S]+)/);
