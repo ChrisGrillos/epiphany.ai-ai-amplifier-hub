@@ -1097,6 +1097,8 @@ If no issues, return: {"status": "ok", "notes": []}`;
               onCreateVault={() => setShowCreateVault(true)}
               onSetupApiKey={() => setShowApiKeySetup(true)}
               hasApiKey={!!apiKey}
+              onOpenSummary={() => setShowSummary(true)}
+              onEndSession={handleEndSession}
             />
           </DragScrollArea>
         ) : activeMainTab === 'moltbook' ? (
