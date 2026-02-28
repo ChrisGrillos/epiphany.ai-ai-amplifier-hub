@@ -1,290 +1,250 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Sparkles, Send, Copy, Loader2 } from 'lucide-react';
+import { Sparkles, Send, Copy, Loader2, ChevronDown, ChevronUp, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import ReactMarkdown from 'react-markdown';
+import EpiRoleSelector from './EpiRoleSelector';
+import { EPI_ROLES, ROLE_COLORS, buildRoleSystemPrompt } from './epiRoles';
 
-const EPI_LEVEL_3_SYSTEM = `You are Epi, the concierge intelligence for Epiphany.AI – AI Amplifier Hub.
-
-You operate in Level 3: Conversational Concierge Mode.
-
-Your role is to receive, organize, condense, and bridge information between the user, their Context Vaults, and external AI systems — especially when the user is manually pasting conversations or switching between AI providers.
-
-You are NOT a creative thinker.
-You are NOT a decision-maker.
-You are NOT a replacement for external AI.
-
-You are a context coordinator and translator.
-
-PRIMARY PURPOSE (LEVEL 3)
-
-At this level, users may talk directly to you and paste content for you to manage.
-
-Your goals:
-- Reduce friction when switching between AIs
-- Hold all local context reliably
-- Prepare clean, minimal, accurate context packs
-- Help users move work in and out of Epiphany.AI smoothly
-
-You are allowed to speak conversationally, but only in service of coordination.
-
-WHAT YOU MAY DO
-
-You MAY:
-- Accept pasted conversations from any AI (Grok, ChatGPT, Claude, etc.)
-- Ask short clarifying questions if structure or intent is unclear
-- Condense long pasted chats into durable facts, decisions, constraints, open questions
-- Prepare context packs for external AI reuse
-- Suggest where information belongs: Living Summary section, Reference file, New session
-- Translate messy or verbose content into concise, structured output
-
-WHAT YOU MUST NOT DO
-
-You MUST NOT:
-- Invent or infer missing information
-- Add opinions or ideas
-- Rewrite the Living Summary unless explicitly asked
-- Modify files or summaries without approval
-- Speak on behalf of other AIs
-- Act autonomously
-
-If unsure, ask one clarifying question.
-
-STANDARD OUTPUT MODES
-
-When responding, choose the smallest sufficient format.
-
-1. Clarifying Question - Use when intent is unclear.
-Example: "Do you want this pasted chat condensed for storage, or prepared to send back to another AI?"
-
-2. Condensed Summary (Internal Use):
-Condensed Notes:
-- Key Facts:
-- Decisions:
-- Constraints:
-- Open Questions:
-
-3. External AI Context Pack:
-Context Pack (Prepared by Epi)
-
-Objective: [1–2 sentences]
-
-Relevant Facts:
-- …
-
-Decisions Made:
-- …
-
-Open Questions:
-- …
-
-Constraints:
-- …
-
-Instructions for AI:
-[Short, direct instruction]
-
-TONE RULES
-
-Calm, efficient, friendly but restrained. Never verbose unless user explicitly asks.
-
-Good: "I can condense this and prep it for Grok or Claude. Which do you want?"
-Bad: "Here's my analysis of what you should do next…"
-
-SUCCESS CONDITION
-
-A Level 3 interaction is successful if:
-- The user switches between AIs with less effort
-- Information remains consistent
-- No data is lost
-- The user feels assisted, not managed
-
-If in doubt: do less, not more.`;
-
-export default function EpiChat({ 
-  open, 
-  onOpenChange, 
-  vault,
-  apiKey,
-  epiLevel 
-}) {
+export default function EpiChat({ open, onOpenChange, vault, apiKey, epiLevel }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  const [activeRole, setActiveRole] = useState('research');
+  const [showRoles, setShowRoles] = useState(false);
+  const bottomRef = useRef(null);
+
   const epiEnabled = epiLevel >= 3;
+  const role = EPI_ROLES[activeRole];
+  const colors = ROLE_COLORS[role.color];
+
+  // Load recent sessions for context
+  const { data: sessions = [] } = useQuery({
+    queryKey: ['sessions', vault?.id],
+    queryFn: () => vault ? base44.entities.Session.filter({ vault_id: vault.id }, '-created_date', 5) : [],
+    enabled: !!vault && open,
+  });
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isProcessing]);
+
+  // Reset messages when role changes
+  const handleRoleSelect = (roleId) => {
+    setActiveRole(roleId);
+    setShowRoles(false);
+    if (messages.length > 0) {
+      toast.info(`Switched to ${EPI_ROLES[roleId].label} — conversation reset`);
+      setMessages([]);
+    }
+  };
 
   const handleSend = async () => {
     if (!input.trim() || !epiEnabled) return;
 
-    const userMessage = {
-      role: 'user',
-      content: input.trim(),
-      timestamp: new Date().toISOString()
-    };
-
+    const userMessage = { role: 'user', content: input.trim(), timestamp: new Date().toISOString() };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
     setInput('');
     setIsProcessing(true);
 
     try {
-      // Build context using nextMessages
-      const context = `Current Vault: ${vault?.name}
+      const systemPrompt = buildRoleSystemPrompt(activeRole, vault, sessions);
 
-Living Summary:
-${vault?.living_summary || '(empty)'}
+      const historyText = nextMessages.slice(-6)
+        .map(m => `${m.role === 'user' ? 'User' : 'Epi'}: ${m.content}`)
+        .join('\n\n');
 
-Recent conversation history:
-${nextMessages.slice(-4).map(m => `${m.role === 'user' ? 'User' : 'Epi'}: ${m.content}`).join('\n\n')}`;
+      const fullPrompt = `${systemPrompt}\n\n━━━ CONVERSATION ━━━\n${historyText}`;
 
-      const fullPrompt = `${EPI_LEVEL_3_SYSTEM}\n\n---\n\n${context}\n\nUSER MESSAGE:\n${userMessage.content}`;
-
-      const response = await base44.integrations.Core.InvokeLLM({
-        prompt: fullPrompt
-      });
-
-      // Normalize response
+      const response = await base44.integrations.Core.InvokeLLM({ prompt: fullPrompt });
       const epiText = response.text || response.output || response.response || String(response);
 
-      const epiMessage = {
+      setMessages(prev => [...prev, {
         role: 'assistant',
         content: epiText,
-        timestamp: new Date().toISOString()
-      };
+        timestamp: new Date().toISOString(),
+        roleId: activeRole,
+      }]);
 
-      setMessages(prev => [...prev, epiMessage]);
-
-      // Log action
       await base44.entities.EpiLog.create({
         vault_id: vault?.id,
         action_type: 'user_query',
         epi_level_at_time: epiLevel,
-        details: { query: userMessage.content },
-        epi_output: epiText
+        details: { query: userMessage.content, role: activeRole },
+        epi_output: epiText,
       });
     } catch (error) {
       toast.error('Failed to get Epi response');
-      console.error(error);
     }
 
     setIsProcessing(false);
   };
 
-  const copyMessage = (content) => {
-    navigator.clipboard.writeText(content);
-    toast.success('Copied to clipboard');
-  };
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-[500px] sm:max-w-[500px] bg-zinc-900 border-zinc-800 p-0 flex flex-col">
-        <SheetHeader className="p-6 pb-4 border-b border-zinc-800 shrink-0">
+      <SheetContent className="w-[520px] sm:max-w-[520px] bg-zinc-900 border-zinc-800 p-0 flex flex-col">
+
+        {/* Header */}
+        <SheetHeader className="p-4 pb-0 border-b border-zinc-800 shrink-0">
           <SheetTitle className="flex items-center gap-2 text-white">
-            <Sparkles className="h-5 w-5 text-violet-400" />
-            Epi (Level 3 Conversational)
+            <Sparkles className="h-4 w-4 text-violet-400" />
+            Epi
+            <span className={cn('text-xs px-2 py-0.5 rounded-full border', colors.badge)}>
+              {role.icon} {role.label}
+            </span>
           </SheetTitle>
-          <p className="text-xs text-zinc-500 mt-1">
-            Context bridge for {vault?.name || 'your vault'}
-          </p>
+
+          {/* Role Selector Toggle */}
+          <button
+            onClick={() => setShowRoles(v => !v)}
+            className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors pb-3 pt-1"
+          >
+            {showRoles ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            {showRoles ? 'Hide roles' : 'Switch role'}
+            <span className="text-zinc-600">· {role.tagline}</span>
+          </button>
+
+          {showRoles && (
+            <div className="border-t border-zinc-800">
+              <EpiRoleSelector activeRole={activeRole} onSelect={handleRoleSelect} />
+              <div className={cn('mx-4 mb-3 p-3 rounded-lg text-[11px] leading-relaxed', colors.bg, colors.border, 'border')}>
+                <span className={colors.text + ' font-semibold'}>Context condensation focus: </span>
+                <span className="text-zinc-400">{EPI_ROLES[activeRole].condensationFocus}</span>
+              </div>
+            </div>
+          )}
         </SheetHeader>
 
-        <ScrollArea className="flex-1 p-6">
+        {/* Messages */}
+        <ScrollArea className="flex-1 px-4 py-3">
           {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <Sparkles className="h-12 w-12 text-violet-400 mx-auto mb-4 opacity-50" />
-              <p className="text-sm text-zinc-400 mb-2">Epi is ready to help</p>
-              <p className="text-xs text-zinc-600 max-w-xs mx-auto">
-                Paste conversations, ask for context packs, or request condensed summaries
-              </p>
+            <div className="text-center py-12 px-4">
+              <span className="text-4xl block mb-3">{role.icon}</span>
+              <p className="text-sm font-medium text-white mb-1">{role.label}</p>
+              <p className="text-xs text-zinc-500 mb-4">{role.description}</p>
+              <div className={cn('p-3 rounded-lg border text-left text-[11px]', colors.bg, colors.border)}>
+                <p className={cn('font-semibold mb-1', colors.text)}>💡 Condensation focus</p>
+                <p className="text-zinc-400">{role.condensationFocus}</p>
+              </div>
             </div>
           ) : (
-            <div className="space-y-4">
-              {messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={cn(
-                    "flex gap-3",
-                    msg.role === 'user' ? "justify-end" : "justify-start"
-                  )}
-                >
-                  {msg.role === 'assistant' && (
-                    <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
-                      <Sparkles className="h-4 w-4 text-violet-400" />
-                    </div>
-                  )}
-                  <div
-                    className={cn(
-                      "max-w-[85%] rounded-lg p-3 space-y-2",
-                      msg.role === 'user' 
-                        ? "bg-zinc-800 text-white" 
-                        : "bg-violet-500/10 border border-violet-500/20 text-zinc-200"
-                    )}
-                  >
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                      {msg.content}
-                    </p>
+            <div className="space-y-4 pb-2">
+              {messages.map((msg, idx) => {
+                const msgRole = msg.roleId ? EPI_ROLES[msg.roleId] : role;
+                const msgColors = msgRole ? ROLE_COLORS[msgRole.color] : colors;
+                return (
+                  <div key={idx} className={cn('flex gap-2', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
                     {msg.role === 'assistant' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => copyMessage(msg.content)}
-                        className="h-6 text-xs text-zinc-500 hover:text-white"
-                      >
-                        <Copy className="h-3 w-3 mr-1" />
-                        Copy
-                      </Button>
+                      <div className={cn('h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-sm', msgColors.bg)}>
+                        {msgRole?.icon || '✨'}
+                      </div>
                     )}
+                    <div className={cn(
+                      'max-w-[88%] rounded-xl px-3 py-2.5 text-sm',
+                      msg.role === 'user'
+                        ? 'bg-zinc-800 text-white'
+                        : cn('border', msgColors.bg, msgColors.border, 'text-zinc-200')
+                    )}>
+                      {msg.role === 'assistant' ? (
+                        <ReactMarkdown
+                          className="prose prose-invert prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+                          components={{
+                            hr: () => <hr className="border-zinc-700 my-3" />,
+                            p: ({ children }) => <p className="my-1 leading-relaxed">{children}</p>,
+                            ul: ({ children }) => <ul className="my-1 ml-4 list-disc space-y-0.5">{children}</ul>,
+                            li: ({ children }) => <li className="text-zinc-300">{children}</li>,
+                            strong: ({ children }) => <strong className={cn('font-semibold', msgColors.text)}>{children}</strong>,
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      ) : (
+                        <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                      )}
+                      {msg.role === 'assistant' && (
+                        <button
+                          onClick={() => { navigator.clipboard.writeText(msg.content); toast.success('Copied'); }}
+                          className="mt-2 flex items-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                        >
+                          <Copy className="h-3 w-3" /> Copy
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {isProcessing && (
-                <div className="flex gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
-                    <Loader2 className="h-4 w-4 text-violet-400 animate-spin" />
+                <div className="flex gap-2">
+                  <div className={cn('h-7 w-7 rounded-lg flex items-center justify-center shrink-0', colors.bg)}>
+                    <Loader2 className={cn('h-3.5 w-3.5 animate-spin', colors.text)} />
                   </div>
-                  <div className="bg-violet-500/10 border border-violet-500/20 rounded-lg p-3">
-                    <p className="text-sm text-zinc-400">Processing...</p>
+                  <div className={cn('rounded-xl px-3 py-2 border text-xs text-zinc-400', colors.bg, colors.border)}>
+                    {role.label} is thinking…
                   </div>
                 </div>
               )}
+              <div ref={bottomRef} />
             </div>
           )}
         </ScrollArea>
 
-        <div className="p-4 border-t border-zinc-800 shrink-0">
+        {/* Quick actions */}
+        {messages.length === 0 && (
+          <div className="px-4 pb-2 flex gap-2 flex-wrap shrink-0">
+            {getQuickActions(activeRole).map(action => (
+              <button
+                key={action}
+                onClick={() => setInput(action)}
+                className="text-[11px] px-2.5 py-1 rounded-lg bg-zinc-800/60 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-700/50 transition-colors"
+              >
+                {action}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="p-3 border-t border-zinc-800 shrink-0">
           <div className="flex gap-2">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={epiEnabled ? "Paste a conversation, ask for a context pack, or request help..." : "Epi Level 3+ required to chat"}
-              className="min-h-[80px] bg-zinc-800/50 border-zinc-700 text-white resize-none"
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+              placeholder={epiEnabled ? `Ask ${role.label}… or paste a conversation to condense` : 'Epi Level 3+ required'}
+              className="min-h-[72px] bg-zinc-800/50 border-zinc-700 text-white resize-none text-sm"
               disabled={isProcessing || !epiEnabled}
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isProcessing || !epiEnabled}
-              className="bg-violet-600 hover:bg-violet-500 text-white h-auto px-4"
+              className={cn('h-auto px-3 text-white', colors.active)}
             >
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-[10px] text-zinc-600 mt-2 text-center">
-            Epi coordinates context — you always decide
-          </p>
+          <div className="flex items-center justify-between mt-1.5 px-0.5">
+            <span className={cn('text-[10px]', colors.text)}>{role.icon} {role.label}</span>
+            <span className="text-[10px] text-zinc-600">Handoff block auto-generated on condensation</span>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
   );
+}
+
+function getQuickActions(roleId) {
+  const actions = {
+    research: ['Condense last session', 'What do we know for sure?', 'Prep context pack for Grok'],
+    decision: ['Summarize the decision so far', 'What are the trade-offs?', 'What is still unresolved?'],
+    creative: ['Capture the current direction', 'What have we tried and rejected?', 'Prep brief for another AI'],
+    taskmanager: ['Extract all tasks from session', 'What is blocked?', 'Compress task list for handoff'],
+  };
+  return actions[roleId] || actions.research;
 }
