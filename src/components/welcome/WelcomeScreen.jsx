@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, FolderPlus, ArrowRight, Brain, Zap, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function WelcomeScreen({ onCreateVault, onSetupApiKey, hasApiKey }) {
+export default function WelcomeScreen({ onCreateVault, onSetupApiKey, hasApiKey, onOpenSummary, onEndSession, onOpenApiSetup }) {
   return (
     <div className="flex-1 flex items-center justify-center p-8 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
       <motion.div
