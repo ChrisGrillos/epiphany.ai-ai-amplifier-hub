@@ -1361,7 +1361,9 @@ If no issues, return: {"status": "ok", "notes": []}`;
           state={
             epiNudge
               ? 'alert'
-              : isLoading || isSynthesizing
+              : isSynthesizing
+              ? 'thinking'
+              : isLoading
               ? (activeTab === 'epi' ? 'thinking' : 'speaking')
               : 'idle'
           }
