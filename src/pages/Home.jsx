@@ -24,7 +24,7 @@ import CalendarExport from '@/components/calendar/CalendarExport';
 import EmailDraft from '@/components/email/EmailDraft';
 import DragScrollArea from '@/components/ui/DragScrollArea';
 import EpiSettings from '@/components/epi/EpiSettings';
-import EpiChat from '@/components/epi/EpiChat';
+import EpiChat from '@/components/epi/EpiChat.jsx';
 import EpiNudge from '@/components/epi/EpiNudge';
 import EpiAvatar from '@/components/epi/EpiAvatar';
 import MoltbookHub from '@/components/moltbook/MoltbookHub';
