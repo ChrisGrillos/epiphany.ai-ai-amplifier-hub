@@ -36,6 +36,7 @@ import BridgeConversations from '@/components/bridge/BridgeConversations';
 import ReferenceArchival from '@/components/references/ReferenceArchival';
 import CrossModelMergeLayer from '@/components/merge/CrossModelMergeLayer';
 import MultiAgentSession from '@/components/multiagent/MultiAgentSession';
+import SocialMediaPlugin from '@/components/social/SocialMediaPlugin';
 import ContextIndicator from '@/components/chat/ContextIndicator';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getApiKeys, getActiveProvider } from '@/components/epi/workflowEngine';
