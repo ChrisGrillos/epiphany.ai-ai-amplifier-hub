@@ -243,6 +243,9 @@ Format your response as JSON.`;
               {/* ── ANALYTICS TAB ── */}
               {activeTab === 'analytics' && <SocialAnalytics />}
 
+              {/* ── QUEUE TAB ── */}
+              {activeTab === 'queue' && <PostQueue />}
+
               {/* ── ACCOUNTS TAB ── */}
               {activeTab === 'accounts' && (
                 <div className="space-y-3">
