@@ -127,6 +127,7 @@ export default function Home() {
   const [showMultiApiSetup, setShowMultiApiSetup] = useState(false);
   const [showMergeLayer, setShowMergeLayer] = useState(false);
   const [showMultiAgent, setShowMultiAgent] = useState(false);
+  const [showSocialPlugin, setShowSocialPlugin] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
