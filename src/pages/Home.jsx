@@ -1144,6 +1144,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
               onShowCalendar={() => setShowCalendarExport(true)}
               onShowEmail={() => setShowEmailDraft(true)}
               onShowArchival={() => setShowArchival(true)}
+              onShowMembers={() => setShowMembers(true)}
               hasMessages={messages.length > 0}
               referencesCount={references.length}
               onCopyLivingSummary={handleCopyLivingSummary}
