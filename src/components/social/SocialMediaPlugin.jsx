@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils';
 import {
   Share2, Sparkles, Upload, X, FileText, Loader2,
   Twitter, Linkedin, Instagram, Lock, Crown, CheckCircle2, Copy,
-  CalendarClock, Link2, ChevronRight, BarChart2
+  CalendarClock, Link2, ChevronRight, BarChart2, LayoutList
 } from 'lucide-react';
 import SocialAccountsManager, { useSocialAccounts } from './SocialAccountsManager';
 import SchedulePostModal from './SchedulePostModal';
