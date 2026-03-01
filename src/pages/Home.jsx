@@ -1412,6 +1412,13 @@ If no issues, return: {"status": "ok", "notes": []}`;
         }}
       />
 
+      {/* Multi-Agent Session */}
+      <MultiAgentSession
+        open={showMultiAgent}
+        onOpenChange={setShowMultiAgent}
+        vault={activeVault}
+      />
+
       {/* Cross-Model Merge Layer */}
       <CrossModelMergeLayer
         open={showMergeLayer}
