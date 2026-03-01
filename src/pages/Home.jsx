@@ -1433,6 +1433,13 @@ If no issues, return: {"status": "ok", "notes": []}`;
         isSubscribed={false}
       />
 
+      {/* Vault Members Panel */}
+      <VaultMembersPanel
+        open={showMembers}
+        onOpenChange={setShowMembers}
+        vault={activeVault}
+      />
+
       {/* Cross-Model Merge Layer */}
       <CrossModelMergeLayer
         open={showMergeLayer}
