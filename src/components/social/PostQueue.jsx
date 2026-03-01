@@ -115,14 +115,31 @@ export default function PostQueue() {
             {posts.length} total
           </Badge>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => queryClient.invalidateQueries({ queryKey: ['scheduled_posts'] })}
-          className="h-7 text-[10px] text-zinc-500 hover:text-white px-2"
-        >
-          <RefreshCw className="h-3 w-3 mr-1" /> Refresh
-        </Button>
+        <div className="flex items-center gap-1.5">
+          {/* View toggle */}
+          <div className="flex rounded-lg border border-zinc-700 overflow-hidden">
+            <button
+              onClick={() => setView('list')}
+              className={cn('flex items-center gap-1 px-2.5 py-1.5 text-[10px] transition-colors', view === 'list' ? 'bg-violet-600 text-white' : 'text-zinc-500 hover:text-zinc-300')}
+            >
+              <LayoutList className="h-3 w-3" /> List
+            </button>
+            <button
+              onClick={() => setView('calendar')}
+              className={cn('flex items-center gap-1 px-2.5 py-1.5 text-[10px] transition-colors', view === 'calendar' ? 'bg-violet-600 text-white' : 'text-zinc-500 hover:text-zinc-300')}
+            >
+              <CalendarDays className="h-3 w-3" /> Calendar
+            </button>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['scheduled_posts'] })}
+            className="h-7 text-[10px] text-zinc-500 hover:text-white px-2"
+          >
+            <RefreshCw className="h-3 w-3 mr-1" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Platform filter */}
