@@ -259,14 +259,32 @@ export default function MoltbookHub({ activeVault }) {
                       </Badge>
                     )}
                   </div>
-                  <Button
-                    onClick={() => setSelectedAgent(agent)}
-                    className="w-full bg-violet-600 hover:bg-violet-500"
-                    size="sm"
-                  >
-                    <MessageSquare className="h-3 w-3 mr-2" />
-                    Chat with Agent
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => setSelectedAgent(agent)}
+                      className="flex-1 bg-violet-600 hover:bg-violet-500"
+                      size="sm"
+                    >
+                      <MessageSquare className="h-3 w-3 mr-2" />
+                      Chat
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      title={agent.trusted ? 'Trusted – has vault access when you share it' : 'Sandboxed guest – no vault access'}
+                      onClick={async () => {
+                        await base44.entities.MoltbookAgent.update(agent.id, { trusted: !agent.trusted });
+                        queryClient.invalidateQueries({ queryKey: ['moltbook_agents'] });
+                      }}
+                      className={agent.trusted
+                        ? 'border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10'
+                        : 'border-zinc-700 text-zinc-500 hover:text-zinc-300'}
+                    >
+                      {agent.trusted
+                        ? <ShieldCheck className="h-3.5 w-3.5" />
+                        : <ShieldAlert className="h-3.5 w-3.5" />}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
