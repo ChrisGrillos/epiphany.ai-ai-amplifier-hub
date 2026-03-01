@@ -265,7 +265,8 @@ export default function PostQueue() {
           }}
         />
       )}
-      </>}
+      </React.Fragment>
+      )}
     </div>
   );
 }
