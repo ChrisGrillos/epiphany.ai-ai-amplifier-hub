@@ -16,6 +16,7 @@ import {
 } from 'recharts';
 import { format, parseISO, subDays, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import BenchmarkPanel from './BenchmarkPanel';
+import CompetitorAnalysis from './CompetitorAnalysis';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
