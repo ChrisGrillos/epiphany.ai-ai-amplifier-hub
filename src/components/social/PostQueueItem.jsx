@@ -32,6 +32,7 @@ export default function PostQueueItem({
   const meta = PLATFORM_META[post.platform] || PLATFORM_META.twitter;
   const { Icon, label, color, bg, border } = meta;
   const [expanded, setExpanded] = useState(false);
+  const [showCollab, setShowCollab] = useState(false);
 
   const scheduledDate = post.scheduled_at ? parseISO(post.scheduled_at) : null;
   const isPast = scheduledDate && scheduledDate < new Date();
