@@ -17,7 +17,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
-  Zap
+  Zap,
+  ShieldCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { toast } from 'sonner';
 import MoltbookApiKeySetup from './MoltbookApiKeySetup';
