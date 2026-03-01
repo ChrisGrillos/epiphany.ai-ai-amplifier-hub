@@ -13,6 +13,7 @@ import {
   CalendarClock, Link2, ChevronRight, BarChart2, LayoutList
 } from 'lucide-react';
 import SocialAccountsManager, { useSocialAccounts } from './SocialAccountsManager';
+import PostIdeasPanel from './PostIdeasPanel';
 import SchedulePostModal from './SchedulePostModal';
 import SocialAnalytics from './SocialAnalytics';
 import PostQueue from './PostQueue';
