@@ -52,6 +52,7 @@ export default function SessionHeader({
   onShowEmail,
   onShowEpiChat,
   onShowArchival,
+  onShowMembers,
   hasMessages,
   referencesCount = 0,
   onCopyLivingSummary,
