@@ -265,6 +265,16 @@ Format your response as JSON.`;
               {/* ── COMPOSE TAB ── */}
               {activeTab === 'compose' && (
                 <>
+                  {/* Post Ideas Panel */}
+                  <PostIdeasPanel
+                    vault={vault}
+                    onUseIdea={(idea) => {
+                      setContentText(idea.premise);
+                      setTone(idea.suggested_tone || 'Professional');
+                      toast.success(`Idea loaded: "${idea.title}"`);
+                    }}
+                  />
+
                   {/* Platforms */}
                   <div>
                     <label className="text-xs text-zinc-400 mb-2 block font-medium">Target Platforms</label>
