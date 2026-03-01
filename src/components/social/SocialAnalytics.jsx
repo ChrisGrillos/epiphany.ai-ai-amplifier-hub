@@ -15,6 +15,7 @@ import {
   ResponsiveContainer, Cell, CartesianGrid, PieChart, Pie, Legend
 } from 'recharts';
 import { format, parseISO, subDays, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import BenchmarkPanel from './BenchmarkPanel';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
