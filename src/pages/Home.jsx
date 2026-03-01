@@ -938,20 +938,14 @@ If no issues, return: {"status": "ok", "notes": []}`;
   const handleUpdateEpiLevel = async (newLevel) => {
     try {
       if (appSettings) {
-        await updateVaultMutation.mutateAsync({
-          id: appSettings.id,
-          data: { epi_level: newLevel }
-        });
+        await base44.entities.AppSettings.update(appSettings.id, { epi_level: newLevel });
         setAppSettings(prev => ({ ...prev, epi_level: newLevel }));
-        setEpiLevel(newLevel);
-        toast.success(`Epi set to Level ${newLevel}`);
       } else {
-        // Create settings
         const settings = await base44.entities.AppSettings.create({ epi_level: newLevel });
         setAppSettings(settings);
-        setEpiLevel(newLevel);
-        toast.success(`Epi set to Level ${newLevel}`);
       }
+      setEpiLevel(newLevel);
+      toast.success(`Epi set to Level ${newLevel}`);
     } catch (error) {
       toast.error('Failed to update Epi level');
     }
