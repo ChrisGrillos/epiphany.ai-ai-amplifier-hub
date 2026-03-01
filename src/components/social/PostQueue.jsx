@@ -194,6 +194,18 @@ export default function PostQueue() {
         ))}
       </div>
 
+      {/* ── CALENDAR VIEW ── */}
+      {view === 'calendar' && (
+        <PostCalendar
+          posts={posts}
+          onReschedule={async (post, newTimeISO) => {
+            await updateMutation.mutateAsync({ id: post.id, data: { scheduled_at: newTimeISO } });
+            toast.success('Post rescheduled');
+          }}
+        />
+      )}
+
+      {view === 'list' && <>
       {/* Overdue warning */}
       {statusFilter === 'scheduled' && overdue.length > 0 && (
         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
