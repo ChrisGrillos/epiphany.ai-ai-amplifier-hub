@@ -208,8 +208,9 @@ Format your response as JSON.`;
             {/* Tabs */}
             <div className="flex gap-0">
               {[
-                { id: 'compose', label: 'Compose', icon: Sparkles },
-                { id: 'accounts', label: 'Accounts', icon: Link2, badge: connectedCount || undefined },
+                { id: 'compose',   label: 'Compose',   icon: Sparkles },
+                { id: 'analytics', label: 'Analytics',  icon: BarChart2 },
+                { id: 'accounts',  label: 'Accounts',   icon: Link2, badge: connectedCount || undefined },
               ].map(tab => {
                 const Icon = tab.icon;
                 return (
