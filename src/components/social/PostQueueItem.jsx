@@ -108,6 +108,27 @@ export default function PostQueueItem({
               ))}
             </div>
           )}
+
+          {/* Collab indicators */}
+          <div className="flex items-center gap-2 pt-0.5">
+            {post.assigned_to && (
+              <span className="text-[9px] text-zinc-600 flex items-center gap-0.5">
+                <Users className="h-2.5 w-2.5" /> {post.assigned_to}
+              </span>
+            )}
+            {(post.comments || []).length > 0 && (
+              <span className="text-[9px] text-zinc-600 flex items-center gap-0.5">
+                <MessageSquare className="h-2.5 w-2.5" /> {post.comments.length}
+              </span>
+            )}
+            <button
+              onClick={() => setShowCollab(v => !v)}
+              className="text-[9px] text-zinc-600 hover:text-violet-400 transition-colors flex items-center gap-0.5"
+            >
+              <MessageSquare className="h-2.5 w-2.5" />
+              {showCollab ? 'Hide' : 'Collaborate'}
+            </button>
+          </div>
         </div>
 
         {/* Actions */}
