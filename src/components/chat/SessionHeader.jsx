@@ -15,8 +15,10 @@ import {
   Mail,
   MoreHorizontal,
   Copy,
-  MessageSquare
+  MessageSquare,
+  Users
 } from 'lucide-react';
+import PresenceAvatars from '@/components/collab/PresenceAvatars';
 import {
   DropdownMenu,
   DropdownMenuContent,
