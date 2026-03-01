@@ -679,6 +679,17 @@ export default function SocialAnalytics() {
       {/* Benchmarking */}
       <BenchmarkPanel posts={posts} />
 
+      {/* Competitor Analysis */}
+      <CompetitorAnalysis
+        userAvgEngagement={
+          published.length
+            ? published.reduce((s, p) => s + (p.analytics?.impressions
+                ? ((p.analytics.likes + p.analytics.shares + p.analytics.comments) / p.analytics.impressions) * 100
+                : 0), 0) / published.length
+            : null
+        }
+      />
+
       {/* Team Contributions */}
       <TeamContributions posts={allPosts} />
 
