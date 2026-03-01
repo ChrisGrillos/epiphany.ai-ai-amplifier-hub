@@ -1427,6 +1427,14 @@ If no issues, return: {"status": "ok", "notes": []}`;
         vault={activeVault}
       />
 
+      {/* Social Media Plugin */}
+      <SocialMediaPlugin
+        open={showSocialPlugin}
+        onOpenChange={setShowSocialPlugin}
+        vault={activeVault}
+        isSubscribed={false}
+      />
+
       {/* Cross-Model Merge Layer */}
       <CrossModelMergeLayer
         open={showMergeLayer}
