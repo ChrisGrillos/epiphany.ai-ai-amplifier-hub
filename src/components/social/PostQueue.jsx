@@ -205,7 +205,8 @@ export default function PostQueue() {
         />
       )}
 
-      {view === 'list' && <>
+      {view === 'list' && (
+      <React.Fragment>
       {/* Overdue warning */}
       {statusFilter === 'scheduled' && overdue.length > 0 && (
         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
