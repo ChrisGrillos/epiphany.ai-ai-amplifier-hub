@@ -71,6 +71,7 @@ export default function LiveSummaryView({
   onOpenChange, 
   summary,
   vaultName,
+  vaultId,
   onCheckInsights,
   insightsLoading 
 }) {
