@@ -675,6 +675,9 @@ export default function SocialAnalytics() {
       {/* Platform Breakdown */}
       {hasPublished && <PlatformBreakdown posts={posts} />}
 
+      {/* Benchmarking */}
+      <BenchmarkPanel posts={posts} />
+
       {/* Team Contributions */}
       <TeamContributions posts={allPosts} />
 
