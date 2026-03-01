@@ -15,6 +15,7 @@ import {
 import SocialAccountsManager, { useSocialAccounts } from './SocialAccountsManager';
 import SchedulePostModal from './SchedulePostModal';
 import SocialAnalytics from './SocialAnalytics';
+import PostQueue from './PostQueue';
 
 const PLATFORMS = [
   { id: 'twitter',   label: 'X / Twitter', icon: Twitter,   color: 'text-sky-400',  bg: 'bg-sky-500/10',   border: 'border-sky-500/30',  charLimit: 280 },
