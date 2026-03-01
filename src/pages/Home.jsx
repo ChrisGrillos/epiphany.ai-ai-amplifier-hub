@@ -1244,6 +1244,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
         onOpenChange={setShowSummary}
         summary={activeVault?.living_summary}
         vaultName={activeVault?.name}
+        vaultId={activeVault?.id}
         onCheckInsights={handleCheckInsights}
         insightsLoading={insightsLoading}
         onSuggestionAction={(suggestion) => {
