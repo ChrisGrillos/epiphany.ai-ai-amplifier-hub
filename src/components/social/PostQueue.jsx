@@ -28,6 +28,7 @@ export default function PostQueue() {
   const [platformFilter, setPlatformFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('scheduled');
   const [rescheduleTarget, setRescheduleTarget] = useState(null);
+  const [view, setView] = useState('list'); // 'list' | 'calendar'
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['scheduled_posts'],
