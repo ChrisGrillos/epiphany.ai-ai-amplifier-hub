@@ -95,6 +95,20 @@ export default function SessionHeader({
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Presence */}
+        <PresenceAvatars vaultId={vault?.id} />
+
+        {/* Members */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onShowMembers}
+          className="h-8 text-zinc-400 hover:text-white hover:bg-zinc-800"
+        >
+          <Users className="h-4 w-4 mr-1.5" />
+          <span className="text-xs">Members</span>
+        </Button>
+
         {/* View Summary */}
         <Button
           variant="ghost"
