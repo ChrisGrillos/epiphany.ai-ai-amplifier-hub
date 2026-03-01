@@ -7,11 +7,12 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
   Twitter, Linkedin, Instagram, Loader2, CalendarClock,
-  LayoutList, Filter, RefreshCw, AlertTriangle
+  LayoutList, Filter, RefreshCw, AlertTriangle, CalendarDays
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import PostQueueItem from './PostQueueItem';
 import RescheduleModal from './RescheduleModal';
+import PostCalendar from './PostCalendar';
 
 const PLATFORM_FILTERS = [
   { id: 'all',       label: 'All' },
