@@ -129,6 +129,7 @@ export default function Home() {
   const [showMergeLayer, setShowMergeLayer] = useState(false);
   const [showMultiAgent, setShowMultiAgent] = useState(false);
   const [showSocialPlugin, setShowSocialPlugin] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
