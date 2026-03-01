@@ -238,6 +238,9 @@ Format your response as JSON.`;
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-4">
 
+              {/* ── ANALYTICS TAB ── */}
+              {activeTab === 'analytics' && <SocialAnalytics />}
+
               {/* ── ACCOUNTS TAB ── */}
               {activeTab === 'accounts' && (
                 <div className="space-y-3">
