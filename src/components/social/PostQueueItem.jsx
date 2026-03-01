@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
   Twitter, Linkedin, Instagram, CalendarClock, Pencil,
-  X, ChevronUp, ChevronDown, CheckCircle2, GripVertical, Clock
+  X, ChevronUp, ChevronDown, CheckCircle2, GripVertical, Clock,
+  MessageSquare, Users
 } from 'lucide-react';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
+import PostCollabPanel from './PostCollabPanel';
 
 const PLATFORM_META = {
   twitter:   { label: 'X / Twitter', Icon: Twitter,   color: 'text-sky-400',  bg: 'bg-sky-500/10',   border: 'border-sky-500/30' },
