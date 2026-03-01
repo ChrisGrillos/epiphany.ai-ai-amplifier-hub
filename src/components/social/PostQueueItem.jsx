@@ -164,6 +164,13 @@ export default function PostQueueItem({
           </div>
         )}
       </div>
+
+      {/* Collab Panel */}
+      {showCollab && (
+        <div className="px-3 pb-3">
+          <PostCollabPanel post={post} />
+        </div>
+      )}
     </div>
   );
 }
