@@ -125,6 +125,7 @@ export default function Home() {
   const [showArchival, setShowArchival] = useState(false);
   const [showMultiApiSetup, setShowMultiApiSetup] = useState(false);
   const [showMergeLayer, setShowMergeLayer] = useState(false);
+  const [showMultiAgent, setShowMultiAgent] = useState(false);
   
   // Synthesis
   const [proposedSummary, setProposedSummary] = useState('');
