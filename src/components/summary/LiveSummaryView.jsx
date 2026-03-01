@@ -126,6 +126,12 @@ export default function LiveSummaryView({
           </div>
         </ScrollArea>
 
+        {vaultId && (
+          <div className="p-4 border-t border-zinc-800">
+            <VaultComments vaultId={vaultId} targetType="vault" targetId={vaultId} />
+          </div>
+        )}
+
         <div className="p-4 border-t border-zinc-800">
           <Button
             variant="outline"
