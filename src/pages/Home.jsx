@@ -1086,8 +1086,14 @@ If no issues, return: {"status": "ok", "notes": []}`;
                 Workflows
               </button>
               <button
-                onClick={() => setShowMergeLayer(true)}
+                onClick={() => setShowMultiAgent(true)}
                 className="ml-auto px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
+              >
+                <span>🤖</span> Agents
+              </button>
+              <button
+                onClick={() => setShowMergeLayer(true)}
+                className="px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
                 <span>🔀</span> Merge
               </button>
