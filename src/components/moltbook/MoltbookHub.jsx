@@ -140,6 +140,7 @@ export default function MoltbookHub({ activeVault }) {
         vault={activeVault}
         apiKey={moltbookApiKey}
         onBack={() => setSelectedAgent(null)}
+        isTrusted={!!selectedAgent.trusted}
       />
     );
   }
