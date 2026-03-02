@@ -10,133 +10,58 @@ export const PROVIDERS = {
   custom:    { name: 'Custom OpenAI-compatible', color: 'text-blue-400' },
 };
 
-// ─── API key storage ────────────────────────────────────────────────────────
+// ─── Server-side key management (no localStorage) ───────────────────────────
 
+// Cache of key status so we don't hammer the backend on every check
+let _keyStatusCache = null;
+let _keyStatusFetched = false;
+
+export async function fetchKeyStatus() {
+  const resp = await base44.functions.invoke('llmProxy', { action: 'check_keys' });
+  _keyStatusCache = resp.data;
+  _keyStatusFetched = true;
+  return resp.data;
+}
+
+export async function saveProviderKey(provider, key, extra = {}) {
+  await base44.functions.invoke('llmProxy', {
+    action: 'save_key',
+    provider,
+    key,
+    extra: Object.keys(extra).length ? extra : undefined,
+  });
+  // Invalidate cache
+  _keyStatusCache = null;
+  _keyStatusFetched = false;
+}
+
+export async function getActiveProvider() {
+  if (!_keyStatusFetched) await fetchKeyStatus();
+  return _keyStatusCache?.activeProvider || 'base44';
+}
+
+export async function setActiveProvider(provider) {
+  await base44.functions.invoke('llmProxy', { action: 'set_active_provider', provider });
+  if (_keyStatusCache) _keyStatusCache.activeProvider = provider;
+}
+
+export async function hasKeyForProvider(provider) {
+  if (provider === 'base44') return true;
+  if (!_keyStatusFetched) await fetchKeyStatus();
+  return !!_keyStatusCache?.hasKey?.[provider];
+}
+
+// ─── Kept for backward compat — returns empty (keys no longer in browser) ────
 export const getApiKeys = () => ({
-  grok:        localStorage.getItem('grok_api_key') || '',
-  openai:      localStorage.getItem('openai_api_key') || '',
-  anthropic:   localStorage.getItem('anthropic_api_key') || '',
-  custom_url:  localStorage.getItem('custom_api_url') || '',
-  custom_key:  localStorage.getItem('custom_api_key') || '',
-  custom_model:localStorage.getItem('custom_api_model') || 'gpt-4o',
+  grok: '', openai: '', anthropic: '', custom_url: '', custom_key: '', custom_model: '',
 });
 
-export const saveProviderKey = (provider, key, extra = {}) => {
-  if (provider === 'grok')      localStorage.setItem('grok_api_key', key);
-  if (provider === 'openai')    localStorage.setItem('openai_api_key', key);
-  if (provider === 'anthropic') localStorage.setItem('anthropic_api_key', key);
-  if (provider === 'custom') {
-    localStorage.setItem('custom_api_key', key);
-    if (extra.url)   localStorage.setItem('custom_api_url', extra.url);
-    if (extra.model) localStorage.setItem('custom_api_model', extra.model);
-  }
-};
-
-export const getActiveProvider = () =>
-  localStorage.getItem('active_provider') || 'grok';
-
-export const setActiveProvider = (p) =>
-  localStorage.setItem('active_provider', p);
-
-export const hasKeyForProvider = (provider) => {
-  if (provider === 'base44') return true;
-  const keys = getApiKeys();
-  if (provider === 'grok')      return !!keys.grok;
-  if (provider === 'openai')    return !!keys.openai;
-  if (provider === 'anthropic') return !!keys.anthropic;
-  if (provider === 'custom')    return !!keys.custom_key && !!keys.custom_url;
-  return false;
-};
-
-// ─── LLM call helpers ───────────────────────────────────────────────────────
-
-async function callGrok(prompt, key) {
-  const resp = await fetch('https://api.x.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: 'grok-2-latest',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2048,
-    }),
-  });
-  if (!resp.ok) throw new Error(`Grok error ${resp.status}: ${await resp.text()}`);
-  const d = await resp.json();
-  return d.choices?.[0]?.message?.content || '';
-}
-
-async function callOpenAI(prompt, key) {
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2048,
-    }),
-  });
-  if (!resp.ok) throw new Error(`OpenAI error ${resp.status}: ${await resp.text()}`);
-  const d = await resp.json();
-  return d.choices?.[0]?.message?.content || '';
-}
-
-async function callAnthropic(prompt, key) {
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-  if (!resp.ok) throw new Error(`Anthropic error ${resp.status}: ${await resp.text()}`);
-  const d = await resp.json();
-  return d.content?.[0]?.text || '';
-}
-
-async function callCustom(prompt, keys) {
-  const resp = await fetch(`${keys.custom_url}/chat/completions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${keys.custom_key}` },
-    body: JSON.stringify({
-      model: keys.custom_model || 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
-      max_tokens: 2048,
-    }),
-  });
-  if (!resp.ok) throw new Error(`Custom API error ${resp.status}: ${await resp.text()}`);
-  const d = await resp.json();
-  return d.choices?.[0]?.message?.content || '';
-}
-
-async function callBase44(prompt) {
-  const result = await base44.integrations.Core.InvokeLLM({ prompt });
-  return typeof result === 'string' ? result : result.text || result.output || String(result);
-}
+// ─── LLM call via backend proxy ──────────────────────────────────────────────
 
 export async function callLLMProvider(provider, prompt) {
-  const keys = getApiKeys();
-  switch (provider) {
-    case 'grok':
-      if (!keys.grok) throw new Error('No Grok API key configured');
-      return callGrok(prompt, keys.grok);
-    case 'openai':
-      if (!keys.openai) throw new Error('No OpenAI API key configured');
-      return callOpenAI(prompt, keys.openai);
-    case 'anthropic':
-      if (!keys.anthropic) throw new Error('No Anthropic API key configured');
-      return callAnthropic(prompt, keys.anthropic);
-    case 'custom':
-      if (!keys.custom_key || !keys.custom_url) throw new Error('Custom API not configured');
-      return callCustom(prompt, keys);
-    default:
-      return callBase44(prompt);
-  }
+  const resp = await base44.functions.invoke('llmProxy', { action: 'invoke', provider, prompt });
+  if (resp.data?.error) throw new Error(resp.data.error);
+  return resp.data?.output || '';
 }
 
 // ─── Template resolution ────────────────────────────────────────────────────
@@ -158,7 +83,7 @@ export const evaluateCondition = (condition, ctx) => {
     const fn = new Function('previousOutput', 'vaultSummary', 'userInput', `return (${condition})`);
     return !!fn(ctx.previousOutput || '', ctx.vaultSummary || '', ctx.userInput || '');
   } catch {
-    return true; // on parse error, run the step
+    return true;
   }
 };
 
@@ -172,20 +97,15 @@ export async function executeStep(step, ctx, moltbookAgents = []) {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       if (step.agent_type === 'epi') {
-        return await callBase44(
+        return await callLLMProvider('base44',
           `You are Epi, the context concierge for Epiphany.AI.\n\nVault: ${ctx.vaultName}\nSummary:\n${ctx.vaultSummary}\n\n${prompt}`
         );
       }
       if (step.agent_type === 'moltbook') {
-        const agent = moltbookAgents.find(
-          (a) => a.id === step.agent_id || a.agent_name === step.agent_id
-        );
-        const agentPrompt = agent
-          ? `You are ${agent.agent_name}. ${agent.description || ''}\n\n${prompt}`
-          : prompt;
-        return await callBase44(agentPrompt);
+        const agent = moltbookAgents.find((a) => a.id === step.agent_id || a.agent_name === step.agent_id);
+        const agentPrompt = agent ? `You are ${agent.agent_name}. ${agent.description || ''}\n\n${prompt}` : prompt;
+        return await callLLMProvider('base44', agentPrompt);
       }
-      // llm
       return await callLLMProvider(step.provider || 'base44', prompt);
     } catch (err) {
       lastError = err;
@@ -197,10 +117,6 @@ export async function executeStep(step, ctx, moltbookAgents = []) {
 
 // ─── Full workflow runner ────────────────────────────────────────────────────
 
-/**
- * Run a workflow. onStepUpdate(results[]) called after every step change.
- * Returns { status, results, finalOutput }
- */
 export async function runWorkflow(workflow, ctx, moltbookAgents = [], onStepUpdate) {
   const results = workflow.steps.map((s) => ({
     step_id: s.step_id,
@@ -220,7 +136,6 @@ export async function runWorkflow(workflow, ctx, moltbookAgents = [], onStepUpda
     onStepUpdate?.([...results]);
 
     const shouldRun = evaluateCondition(step.condition, { ...ctx, previousOutput });
-
     if (!shouldRun) {
       results[i].status = 'skipped';
       onStepUpdate?.([...results]);
