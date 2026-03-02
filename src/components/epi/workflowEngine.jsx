@@ -74,16 +74,97 @@ export const resolvePrompt = (template, ctx) =>
     .replace(/\{\{user_input\}\}/g, ctx.userInput || '')
     .replace(/\{\{vault_name\}\}/g, ctx.vaultName || '');
 
-// ─── Condition evaluation ───────────────────────────────────────────────────
+// ─── Safe condition evaluator (no new Function / eval) ──────────────────────
+//
+// Supports a constrained expression grammar:
+//   Comparisons: contains, notContains, startsWith, endsWith, equals, notEquals
+//   Checks:      isEmpty, isNotEmpty
+//   Logical:     AND, OR, NOT
+//   Variables:   previousOutput, vaultSummary, userInput (strings)
+//
+// Examples:
+//   "previousOutput contains 'error'"
+//   "NOT (userInput isEmpty) AND previousOutput contains 'success'"
+
+function resolveVar(name, ctx) {
+  if (name === 'previousOutput') return String(ctx.previousOutput || '');
+  if (name === 'vaultSummary')   return String(ctx.vaultSummary || '');
+  if (name === 'userInput')      return String(ctx.userInput || '');
+  return '';
+}
+
+function evalAtom(expr, ctx) {
+  expr = expr.trim();
+
+  // Quoted string literal value (not a variable) → treat as truthy if non-empty
+  // Variable isEmpty / isNotEmpty
+  const isEmptyMatch = expr.match(/^(\w+)\s+isEmpty$/i);
+  if (isEmptyMatch) return resolveVar(isEmptyMatch[1], ctx).trim() === '';
+
+  const isNotEmptyMatch = expr.match(/^(\w+)\s+isNotEmpty$/i);
+  if (isNotEmptyMatch) return resolveVar(isNotEmptyMatch[1], ctx).trim() !== '';
+
+  // variable OP 'value'
+  const opMatch = expr.match(/^(\w+)\s+(contains|notContains|startsWith|endsWith|equals|notEquals)\s+'([^']*)'$/i);
+  if (opMatch) {
+    const [, varName, op, value] = opMatch;
+    const v = resolveVar(varName, ctx).toLowerCase();
+    const val = value.toLowerCase();
+    switch (op.toLowerCase()) {
+      case 'contains':    return v.includes(val);
+      case 'notcontains': return !v.includes(val);
+      case 'startswith':  return v.startsWith(val);
+      case 'endswith':    return v.endsWith(val);
+      case 'equals':      return v === val;
+      case 'notequals':   return v !== val;
+    }
+  }
+
+  // boolean literals
+  if (expr.toLowerCase() === 'true')  return true;
+  if (expr.toLowerCase() === 'false') return false;
+
+  // Unknown / unsupported → default to true (safe fallback: run the step)
+  return true;
+}
+
+function evalExpr(expr, ctx) {
+  expr = expr.trim();
+
+  // Strip outer parens
+  if (expr.startsWith('(') && expr.endsWith(')')) {
+    return evalExpr(expr.slice(1, -1), ctx);
+  }
+
+  // NOT
+  if (/^NOT\s+/i.test(expr)) {
+    return !evalExpr(expr.replace(/^NOT\s+/i, ''), ctx);
+  }
+
+  // Split on top-level AND / OR (left to right, lowest precedence)
+  let depth = 0;
+  for (let i = expr.length - 1; i >= 0; i--) {
+    if (expr[i] === ')') depth++;
+    if (expr[i] === '(') depth--;
+    if (depth === 0) {
+      if (expr.slice(i).match(/^AND\b/i) && i > 0) {
+        return evalExpr(expr.slice(0, i).trim(), ctx) && evalExpr(expr.slice(i + 3).trim(), ctx);
+      }
+      if (expr.slice(i).match(/^OR\b/i) && i > 0) {
+        return evalExpr(expr.slice(0, i).trim(), ctx) || evalExpr(expr.slice(i + 2).trim(), ctx);
+      }
+    }
+  }
+
+  return evalAtom(expr, ctx);
+}
 
 export const evaluateCondition = (condition, ctx) => {
   if (!condition || !condition.trim()) return true;
   try {
-    // eslint-disable-next-line no-new-func
-    const fn = new Function('previousOutput', 'vaultSummary', 'userInput', `return (${condition})`);
-    return !!fn(ctx.previousOutput || '', ctx.vaultSummary || '', ctx.userInput || '');
+    return evalExpr(condition, ctx);
   } catch {
-    return true;
+    return true; // on parse error, run the step
   }
 };
 
