@@ -1389,10 +1389,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
       <MultiApiKeySetup
         open={showMultiApiSetup}
         onOpenChange={setShowMultiApiSetup}
-        onProviderChange={(p) => {
-          const keys = getApiKeys();
-          if (p === 'grok' && keys.grok) setApiKey(keys.grok);
-        }}
+        onProviderChange={() => {}}
       />
 
       {/* Multi-Agent Session */}
