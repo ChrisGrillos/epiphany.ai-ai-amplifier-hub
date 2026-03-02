@@ -167,16 +167,20 @@ export default function Home() {
     base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
   }, []);
 
+  // Scoped DB — only returns data owned by the current user
+  const db = currentUser ? userScopedEntities(currentUser) : null;
+
   // Queries
   const { data: vaults = [], isLoading: vaultsLoading } = useQuery({
-    queryKey: ['vaults'],
-    queryFn: () => base44.entities.Vault.list('-last_accessed'),
+    queryKey: ['vaults', currentUser?.email],
+    queryFn: () => db ? db.Vault.list('-last_accessed') : [],
+    enabled: !!db,
   });
 
   const { data: references = [], refetch } = useQuery({
-    queryKey: ['references', activeVault?.id],
-    queryFn: () => activeVault ? base44.entities.Reference.filter({ vault_id: activeVault.id }) : [],
-    enabled: !!activeVault,
+    queryKey: ['references', activeVault?.id, currentUser?.email],
+    queryFn: () => (db && activeVault) ? db.Reference.filter({ vault_id: activeVault.id }) : [],
+    enabled: !!db && !!activeVault,
   });
 
   // Load app settings for Epi and tutorial progress
