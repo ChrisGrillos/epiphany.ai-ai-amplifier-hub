@@ -187,22 +187,25 @@ export default function Home() {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settings = await base44.entities.AppSettings.list();
+        const user = await base44.auth.me();
+        if (!user) return;
+        const scopedDb = userScopedEntities(user);
+
+        const settings = await scopedDb.AppSettings.list();
         if (settings.length > 0) {
           setAppSettings(settings[0]);
           setEpiLevel(getEffectiveEpiLevel(activeVault, settings[0]));
         }
         
         // Load tutorial progress
-        const progress = await base44.entities.TutorialProgress.list();
+        const progress = await scopedDb.TutorialProgress.list();
         if (progress.length > 0) {
           setTutorialProgress(progress[0]);
           if (progress[0].tutorial_active && !progress[0].dismissed) {
             setShowTutorial(true);
           }
         } else {
-          // First time user - create progress and show tutorial
-          const newProgress = await base44.entities.TutorialProgress.create({
+          const newProgress = await scopedDb.TutorialProgress.create({
             tutorial_active: true,
             completed_steps: [],
             current_step: 'welcome'
