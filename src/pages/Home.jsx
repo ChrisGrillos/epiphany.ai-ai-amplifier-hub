@@ -431,7 +431,7 @@ export default function Home() {
           content.toLowerCase().includes('check vault') ||
           content.toLowerCase().includes('cleanup')) {
         toast.info('Analyzing vault health...');
-        const sessions = await base44.entities.Session.filter({ vault_id: activeVault.id });
+        const sessions = db ? await db.Session.filter({ vault_id: activeVault.id }) : [];
         const recommendations = await analyzeVaultHealth(activeVault, sessions, references);
         const healthScore = getVaultHealthScore(recommendations);
         responseContent = formatHealthReport(activeVault, recommendations, healthScore);
