@@ -593,18 +593,9 @@ PROPOSE_FILE_UPDATE: <filename>
         ? `${conversationHistory}\n\nUser: ${content}`
         : content;
 
-      // Use the active provider (Grok, OpenAI, Anthropic, custom, or Base44)
-      let response;
-      const activeProvider = getActiveProvider();
-      if (activeProvider === 'base44') {
-        response = await base44.integrations.Core.InvokeLLM({
-          prompt: `${systemPrompt}\n\n${fullPrompt}`,
-          file_urls: image_urls?.length > 0 ? image_urls : undefined,
-        });
-      } else {
-        const { callLLMProvider } = await import('@/components/epi/workflowEngine');
-        response = await callLLMProvider(activeProvider, `${systemPrompt}\n\n${fullPrompt}`);
-      }
+      // All LLM calls route through the secure backend proxy
+      const { callLLMProvider } = await import('@/components/epi/workflowEngine');
+      let response = await callLLMProvider('base44', `${systemPrompt}\n\n${fullPrompt}`);
 
       // Normalize response to string
       if (typeof response !== 'string') {
