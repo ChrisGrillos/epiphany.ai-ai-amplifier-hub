@@ -740,11 +740,6 @@ PROPOSE_FILE_UPDATE: <filename>
   };
 
   const handleCheckInsights = async () => {
-    if (!apiKey) {
-      setShowApiKeySetup(true);
-      return;
-    }
-
     setInsightsLoading(true);
     try {
       const response = await base44.integrations.Core.InvokeLLM({
