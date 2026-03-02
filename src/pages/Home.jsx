@@ -634,11 +634,6 @@ PROPOSE_FILE_UPDATE: <filename>
   };
 
   const handleEndSession = async () => {
-    if (!apiKey) {
-      setShowApiKeySetup(true);
-      return;
-    }
-
     if (messages.length === 0) {
       toast.error('No messages to synthesize');
       return;
