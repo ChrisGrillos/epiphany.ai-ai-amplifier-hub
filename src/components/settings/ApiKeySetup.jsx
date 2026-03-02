@@ -3,10 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, Key, ExternalLink, Shield, Check } from 'lucide-react';
+import { AlertCircle, Key, ExternalLink, Shield, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { saveProviderKey } from '@/components/epi/workflowEngine';
 
-export default function ApiKeySetup({ open, onOpenChange, onSave, existingKey }) {
+export default function ApiKeySetup({ open, onOpenChange, onSave }) {
   const [apiKey, setApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
@@ -16,18 +17,16 @@ export default function ApiKeySetup({ open, onOpenChange, onSave, existingKey })
       setError('Please enter your API key');
       return;
     }
-
     setIsSaving(true);
     setError('');
-
     try {
-      await onSave(apiKey.trim());
+      await saveProviderKey('grok', apiKey.trim());
+      onSave?.(apiKey.trim());
       setApiKey('');
       onOpenChange(false);
-    } catch (err) {
+    } catch {
       setError('Failed to save API key');
     }
-
     setIsSaving(false);
   };
 
@@ -45,17 +44,8 @@ export default function ApiKeySetup({ open, onOpenChange, onSave, existingKey })
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
-          {existingKey && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-              <Check className="h-4 w-4 text-emerald-400" />
-              <span className="text-sm text-emerald-400">API key is configured</span>
-            </div>
-          )}
-
           <div className="space-y-2">
-            <Label className="text-zinc-400 text-xs uppercase tracking-wider">
-              {existingKey ? 'Update API Key' : 'API Key'}
-            </Label>
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">API Key</Label>
             <Input
               type="password"
               value={apiKey}
@@ -72,15 +62,12 @@ export default function ApiKeySetup({ open, onOpenChange, onSave, existingKey })
             </Alert>
           )}
 
-          <div className="bg-zinc-800/30 rounded-lg p-4 space-y-3">
+          <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-2">
-              <Shield className="h-4 w-4 text-zinc-500 mt-0.5" />
-              <div>
-                <p className="text-xs text-zinc-400">
-                  Your API key is stored securely and never leaves your device. 
-                  All API calls are made directly from your browser.
-                </p>
-              </div>
+              <Shield className="h-4 w-4 text-emerald-400 mt-0.5" />
+              <p className="text-xs text-zinc-400">
+                Your API key is encrypted with AES-256-GCM and stored server-side. It never leaves our backend — all AI calls are proxied securely.
+              </p>
             </div>
             <a
               href="https://console.x.ai/"
@@ -94,19 +81,13 @@ export default function ApiKeySetup({ open, onOpenChange, onSave, existingKey })
           </div>
 
           <div className="flex gap-3 pt-2">
-            <Button
-              variant="ghost"
-              onClick={() => onOpenChange(false)}
-              className="flex-1 text-zinc-400 hover:text-white hover:bg-zinc-800"
-            >
+            <Button variant="ghost" onClick={() => onOpenChange(false)}
+              className="flex-1 text-zinc-400 hover:text-white hover:bg-zinc-800">
               Cancel
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={!apiKey.trim() || isSaving}
-              className="flex-1 bg-violet-600 hover:bg-violet-500 text-white"
-            >
-              {isSaving ? 'Saving...' : 'Save Key'}
+            <Button onClick={handleSave} disabled={!apiKey.trim() || isSaving}
+              className="flex-1 bg-violet-600 hover:bg-violet-500 text-white">
+              {isSaving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving…</> : 'Save Key'}
             </Button>
           </div>
         </div>
