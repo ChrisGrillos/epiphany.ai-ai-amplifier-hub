@@ -535,13 +535,6 @@ Key Points:
   };
 
   const handleApiMessage = async (userMessage) => {
-    if (!apiKey) {
-      setShowApiKeySetup(true);
-      toast.error('Please configure your API key first');
-      setIsLoading(false);
-      return;
-    }
-
     try {
       // Check if Epi should provide orchestration guidance
       if (epiLevel >= 3) {
