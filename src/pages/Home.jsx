@@ -840,11 +840,6 @@ ${activeVault?.living_summary}`,
   };
 
   const runGuardianCheck = async (summaryToCheck = null) => {
-    if (!apiKey) {
-      setShowApiKeySetup(true);
-      return;
-    }
-
     setGuardianLoading(true);
     setShowGuardian(true);
 
