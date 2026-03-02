@@ -328,7 +328,7 @@ export default function Home() {
   const createVaultMutation = useMutation({
     mutationFn: (data) => base44.entities.Vault.create(data),
     onSuccess: (newVault) => {
-      queryClient.invalidateQueries({ queryKey: ['vaults'] });
+      queryClient.invalidateQueries({ queryKey: ['vaults', currentUser?.email] });
       setActiveVault(newVault);
       startNewSession(newVault);
       toast.success('Vault created');
@@ -339,7 +339,7 @@ export default function Home() {
   const updateVaultMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Vault.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vaults'] });
+      queryClient.invalidateQueries({ queryKey: ['vaults', currentUser?.email] });
     },
   });
 
