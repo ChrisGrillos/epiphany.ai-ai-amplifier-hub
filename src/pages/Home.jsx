@@ -497,7 +497,7 @@ Key Points:
       else if (content.toLowerCase().includes('summarize') ||
                content.toLowerCase().includes('snapshot') ||
                content.toLowerCase().includes('catch me up')) {
-        const sessions = await base44.entities.Session.filter({ vault_id: activeVault.id }, '-created_date', 1);
+        const sessions = db ? await db.Session.filter({ vault_id: activeVault.id }, '-created_date', 1) : [];
         responseContent = generateVaultSnapshot(activeVault, sessions);
         
         await logEpiAction(activeVault.id, 'vault_snapshot', epiLevel, {}, 'Snapshot generated');
