@@ -362,10 +362,9 @@ export default function Home() {
     startNewSession(vault);
   };
 
-  const handleSaveApiKey = async (key) => {
-    localStorage.setItem('grok_api_key', key);
-    setApiKey(key);
-    toast.success('API key saved');
+  const handleSaveApiKey = async () => {
+    // Keys are now saved via workflowEngine.saveProviderKey -> llmProxy backend
+    toast.success('API key saved securely');
   };
 
   const handleSendMessage = async ({ content, image_urls, target = 'api' }) => {
