@@ -159,12 +159,13 @@ export default function Home() {
   const [showQuickTips, setShowQuickTips] = useState(false);
   const [tutorialProgress, setTutorialProgress] = useState(null);
 
-  // API Key stored in localStorage — reads whichever provider is active
-  const [apiKey, setApiKey] = useState(() => {
-    const keys = getApiKeys();
-    const provider = getActiveProvider();
-    return keys[provider] || keys.grok || '';
-  });
+  const [apiKey, setApiKey] = useState(true); // non-null signals "key may exist server-side"
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Load current user on mount
+  useEffect(() => {
+    base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
+  }, []);
 
   // Queries
   const { data: vaults = [], isLoading: vaultsLoading } = useQuery({
