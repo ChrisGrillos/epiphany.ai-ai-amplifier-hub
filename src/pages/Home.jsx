@@ -171,7 +171,7 @@ export default function Home() {
     handleCompleteTutorial,
   } = useTutorial();
 
-  const { sessionManagerRef } = useSessionManager({
+  const { sessionManagerRef, markAutoSavedSessionSuperseded } = useSessionManager({
     activeVault,
     activeSession,
     messages,
@@ -296,6 +296,7 @@ ${activeVault?.living_summary}`,
     sessionManagerRef,
     runGuardianCheck,
     setEpiNudge,
+    onSessionFinalized: markAutoSavedSessionSuperseded,
   });
 
   // Render

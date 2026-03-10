@@ -23,6 +23,16 @@ export default function useSessionManager({
   setSessionAutoSaved,
 }) {
   const sessionManagerRef = useRef(null);
+  const autoSavedSessionIdRef = useRef(null);
+  const activeSessionStartRef = useRef(null);
+
+  useEffect(() => {
+    const currentStart = activeSession?.started_at || null;
+    if (activeSessionStartRef.current !== currentStart) {
+      activeSessionStartRef.current = currentStart;
+      autoSavedSessionIdRef.current = null;
+    }
+  }, [activeSession?.started_at]);
 
   useEffect(() => {
     if (activeVault && activeSession && messages.length > 0) {
@@ -33,14 +43,25 @@ export default function useSessionManager({
             if (messages.length > 0) {
               try {
                 const title = generateSessionTitle(messages);
-                await base44.entities.Session.create({
-                  vault_id: activeVault.id,
-                  title: `${title} (auto-saved)`,
-                  messages,
-                  status: 'active',
-                  started_at: activeSession.started_at,
-                  attached_reference_ids: selectedReferenceIds,
-                });
+                if (autoSavedSessionIdRef.current) {
+                  await base44.entities.Session.update(autoSavedSessionIdRef.current, {
+                    title: `${title} (auto-saved)`,
+                    messages,
+                    status: 'active',
+                    started_at: activeSession.started_at,
+                    attached_reference_ids: selectedReferenceIds,
+                  });
+                } else {
+                  const savedSession = await base44.entities.Session.create({
+                    vault_id: activeVault.id,
+                    title: `${title} (auto-saved)`,
+                    messages,
+                    status: 'active',
+                    started_at: activeSession.started_at,
+                    attached_reference_ids: selectedReferenceIds,
+                  });
+                  autoSavedSessionIdRef.current = savedSession?.id || null;
+                }
                 setSessionAutoSaved(true);
                 setTimeout(() => setSessionAutoSaved(false), 2000);
               } catch (error) {
@@ -83,6 +104,7 @@ export default function useSessionManager({
               setMessages([]);
               setActiveSession(null);
               setSelectedReferenceIds([]);
+              autoSavedSessionIdRef.current = null;
 
               if (sessionManagerRef.current) {
                 sessionManagerRef.current.stop();
@@ -103,5 +125,18 @@ export default function useSessionManager({
     };
   }, [activeVault, activeSession, messages.length]);
 
-  return { sessionManagerRef };
+  const markAutoSavedSessionSuperseded = async () => {
+    if (!autoSavedSessionIdRef.current) return;
+    try {
+      await base44.entities.Session.update(autoSavedSessionIdRef.current, {
+        status: 'superseded',
+      });
+    } catch (error) {
+      console.error('Failed to mark auto-saved session as superseded:', error);
+    } finally {
+      autoSavedSessionIdRef.current = null;
+    }
+  };
+
+  return { sessionManagerRef, markAutoSavedSessionSuperseded };
 }

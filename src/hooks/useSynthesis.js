@@ -52,6 +52,7 @@ export default function useSynthesis({
   sessionManagerRef,
   runGuardianCheck,
   setEpiNudge,
+  onSessionFinalized,
 }) {
   const [proposedSummary, setProposedSummary] = useState('');
   const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -111,6 +112,8 @@ export default function useSynthesis({
           accepted: true,
         },
       });
+
+      await onSessionFinalized?.();
 
       setActiveVault((prev) => ({ ...prev, living_summary: finalSummary }));
       setShowSynthesisReview(false);
