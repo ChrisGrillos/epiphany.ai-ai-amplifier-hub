@@ -117,7 +117,7 @@ Provide a brief, helpful response that bridges context appropriately.`
             <Shield className="h-16 w-16 text-zinc-700 mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">Bridge Conversation</h3>
             <p className="text-sm text-zinc-400 max-w-md">
-              This is a secure space. Epi mediates context sharing based on your settings.
+              Experimental bridge preview. Epi simulates context mediation based on your selected settings.
             </p>
           </div>
         ) : (
