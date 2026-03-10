@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 
@@ -18,7 +18,6 @@ import ReferencesList from '@/components/references/ReferencesList';
 import AttachReferencesSelector from '@/components/references/AttachReferencesSelector';
 import ReferenceDiffReview from '@/components/references/ReferenceDiffReview';
 import ImportWebChatModal from '@/components/import/ImportWebChatModal';
-import ExportMenu from '@/components/export/ExportMenu';
 import GuardianPanel from '@/components/guardian/GuardianPanel';
 import CalendarExport from '@/components/calendar/CalendarExport';
 import EmailDraft from '@/components/email/EmailDraft';
@@ -48,20 +47,7 @@ import useGuardian from '@/hooks/useGuardian';
 import useMessaging from '@/hooks/useMessaging';
 import useTutorial from '@/hooks/useTutorial';
 import useModalState from '@/hooks/useModalState';
-import { logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
-import { 
-  detectWebChatPaste, 
-  parseWebChat, 
-  condenseWebChatLocal,
-  prepareContextPackFromVault,
-  generateVaultSnapshot 
-} from '@/components/epi/epiPasteUtils';
-import { estimateTokens, needsLLMAssist, truncateToTokenLimit } from '@/components/epi/tokenUtils';
-import { analyzeVaultHealth, getVaultHealthScore, formatHealthReport } from '@/components/epi/vaultHealth';
-import { analyzeWorkflowDelegation, prepareAgentContext, generateOrchestrationMessage, shouldAutoExecuteWorkflow } from '@/components/epi/workflowOrchestration';
-
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
