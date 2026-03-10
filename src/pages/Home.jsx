@@ -46,9 +46,9 @@ import useEpi from '@/hooks/useEpi';
 import useSessionManager from '@/hooks/useSessionManager';
 import useGuardian from '@/hooks/useGuardian';
 import useMessaging from '@/hooks/useMessaging';
+import useTutorial from '@/hooks/useTutorial';
 import { logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
-import { userScopedEntities } from '@/components/lib/userScoped';
 import { 
   detectWebChatPaste, 
   parseWebChat, 
@@ -96,11 +96,6 @@ export default function Home() {
   // References
   const [pendingReferenceDiff, setPendingReferenceDiff] = useState(null);
   
-  // Tutorial
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [showQuickTips, setShowQuickTips] = useState(false);
-  const [tutorialProgress, setTutorialProgress] = useState(null);
-
   const [apiKey, setApiKey] = useState(true); // non-null signals "key may exist server-side"
   const { currentUser, db } = useAuth();
 
@@ -129,10 +124,8 @@ export default function Home() {
 
   const {
     epiLevel,
-    setEpiLevel,
     epiNudge,
     setEpiNudge,
-    appSettings,
     handleUpdateEpiLevel,
   } = useEpi({ activeVault, db });
 
@@ -145,44 +138,15 @@ export default function Home() {
     runGuardianCheck,
   } = useGuardian({ activeVault, messages });
 
-  // Load tutorial progress
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const user = await base44.auth.me();
-        if (!user) return;
-        const scopedDb = userScopedEntities(user);
-        
-        // Load tutorial progress
-        const progress = await scopedDb.TutorialProgress.list();
-        if (progress.length > 0) {
-          setTutorialProgress(progress[0]);
-          if (progress[0].tutorial_active && !progress[0].dismissed) {
-            setShowTutorial(true);
-          }
-        } else {
-          const newProgress = await scopedDb.TutorialProgress.create({
-            tutorial_active: true,
-            completed_steps: [],
-            current_step: 'welcome'
-          });
-          setTutorialProgress(newProgress);
-          setShowTutorial(true);
-        }
-      } catch (error) {
-        console.error('Failed to load tutorial progress:', error);
-      }
-    };
-    loadSettings();
-  }, []);
-  
-  // Show quick tips after tutorial completion
-  useEffect(() => {
-    if (tutorialProgress && !tutorialProgress.tutorial_active && !tutorialProgress.dismissed) {
-      const timer = setTimeout(() => setShowQuickTips(true), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [tutorialProgress]);
+  const {
+    showTutorial,
+    setShowTutorial,
+    showQuickTips,
+    setShowQuickTips,
+    tutorialProgress,
+    handleUpdateTutorialProgress,
+    handleCompleteTutorial,
+  } = useTutorial();
 
   const { sessionManagerRef } = useSessionManager({
     activeVault,
@@ -310,34 +274,6 @@ ${activeVault?.living_summary}`,
     runGuardianCheck,
     setEpiNudge,
   });
-
-  const handleUpdateTutorialProgress = async (stepId) => {
-    if (!tutorialProgress) return;
-    try {
-      const updated = await base44.entities.TutorialProgress.update(tutorialProgress.id, {
-        current_step: stepId,
-        completed_steps: [...new Set([...tutorialProgress.completed_steps, stepId])]
-      });
-      setTutorialProgress(updated);
-    } catch (error) {
-      console.error('Failed to update tutorial progress:', error);
-    }
-  };
-
-  const handleCompleteTutorial = async () => {
-    if (!tutorialProgress) return;
-    try {
-      await base44.entities.TutorialProgress.update(tutorialProgress.id, {
-        tutorial_active: false,
-        dismissed: true
-      });
-      setShowTutorial(false);
-      toast.success('Tutorial completed! ??');
-      setTimeout(() => setShowQuickTips(true), 1000);
-    } catch (error) {
-      console.error('Failed to complete tutorial:', error);
-    }
-  };
 
   // Render
   if (vaultsLoading) {
