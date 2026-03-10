@@ -17,19 +17,118 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+function levenshteinDistance(a, b) {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dp = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+  for (let i = 0; i < rows; i++) dp[i][0] = i;
+  for (let j = 0; j < cols; j++) dp[0][j] = j;
+
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return dp[a.length][b.length];
+}
+
+function similarityRatio(a, b) {
+  const left = (a || '').trim();
+  const right = (b || '').trim();
+  const maxLen = Math.max(left.length, right.length);
+  if (maxLen === 0) return 0;
+  return levenshteinDistance(left.toLowerCase(), right.toLowerCase()) / maxLen;
+}
+
+function splitBySection(summary) {
+  const lines = (summary || '').split('\n').filter((l) => l.trim());
+  const entries = [];
+  let section = 'root';
+
+  for (const line of lines) {
+    if (line.startsWith('##')) {
+      section = line.replace(/^##\s*/, '').trim() || 'root';
+      continue;
+    }
+    entries.push({ section, text: line });
+  }
+
+  return entries;
+}
+
 function diffSummaries(oldSummary, newSummary) {
-  const oldLines = (oldSummary || '').split('\n').filter(l => l.trim());
-  const newLines = (newSummary || '').split('\n').filter(l => l.trim());
-  
-  const oldSet = new Set(oldLines);
-  const newSet = new Set(newLines);
-  
-  const added = newLines.filter(l => !oldSet.has(l) && !l.startsWith('##'));
-  const removed = oldLines.filter(l => !newSet.has(l) && !l.startsWith('##'));
-  
-  // Simple heuristic for modified
+  const oldEntries = splitBySection(oldSummary);
+  const newEntries = splitBySection(newSummary);
+
+  const oldBySection = oldEntries.reduce((acc, entry) => {
+    acc[entry.section] = acc[entry.section] || [];
+    acc[entry.section].push(entry.text);
+    return acc;
+  }, {});
+
+  const newBySection = newEntries.reduce((acc, entry) => {
+    acc[entry.section] = acc[entry.section] || [];
+    acc[entry.section].push(entry.text);
+    return acc;
+  }, {});
+
+  const oldSet = new Set(oldEntries.map((e) => `${e.section}::${e.text}`));
+  const newSet = new Set(newEntries.map((e) => `${e.section}::${e.text}`));
+
+  const removedPool = oldEntries.filter((e) => !newSet.has(`${e.section}::${e.text}`));
+  const addedPool = newEntries.filter((e) => !oldSet.has(`${e.section}::${e.text}`));
+
   const modified = [];
-  
+
+  const consumedAdded = new Set();
+  const consumedRemoved = new Set();
+
+  Object.keys({ ...oldBySection, ...newBySection }).forEach((section) => {
+    const sectionRemoved = removedPool
+      .map((entry, idx) => ({ ...entry, idx }))
+      .filter((entry) => entry.section === section);
+    const sectionAdded = addedPool
+      .map((entry, idx) => ({ ...entry, idx }))
+      .filter((entry) => entry.section === section);
+
+    for (const removedEntry of sectionRemoved) {
+      if (consumedRemoved.has(removedEntry.idx)) continue;
+
+      let best = null;
+      for (const addedEntry of sectionAdded) {
+        if (consumedAdded.has(addedEntry.idx)) continue;
+        const ratio = similarityRatio(removedEntry.text, addedEntry.text);
+        if (ratio <= 0.3 && (!best || ratio < best.ratio)) {
+          best = { idx: addedEntry.idx, ratio, text: addedEntry.text };
+        }
+      }
+
+      if (best) {
+        consumedRemoved.add(removedEntry.idx);
+        consumedAdded.add(best.idx);
+        modified.push({
+          section,
+          from: removedEntry.text,
+          to: best.text,
+        });
+      }
+    }
+  });
+
+  const added = addedPool
+    .filter((entry, idx) => !consumedAdded.has(idx))
+    .map((entry) => entry.text);
+  const removed = removedPool
+    .filter((entry, idx) => !consumedRemoved.has(idx))
+    .map((entry) => entry.text);
+
   return { added, removed, modified };
 }
 
