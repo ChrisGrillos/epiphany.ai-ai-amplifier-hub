@@ -39,14 +39,14 @@ function SubscriptionGate({ onUnlock }) {
       </div>
       <h3 className="text-xl font-bold text-white mb-2">Social Media Plugin</h3>
       <p className="text-sm text-zinc-400 mb-1 max-w-xs">
-        Let Epi craft and schedule platform-optimized posts from your vault content.
+        Let Epi draft platform-specific social posts from your vault content.
       </p>
       <div className="flex flex-col gap-2 mt-4 mb-6 text-left w-full max-w-xs">
         {[
           'Upload content — Epi writes platform-specific posts',
           'Tone & format controls per platform',
           'X, LinkedIn, Instagram outputs',
-          'Connect accounts & schedule directly',
+          'Demo account linking & scheduling flows',
           'Scheduled posts queue with status tracking',
         ].map((f, i) => (
           <div key={i} className="flex items-start gap-2 text-xs text-zinc-400">
@@ -181,6 +181,7 @@ Format your response as JSON.`;
             <SheetTitle className="flex items-center gap-2 text-white">
               <Share2 className="h-4 w-4 text-violet-400" /> Social Plugin
               <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px] ml-1">Pro</Badge>
+              <Badge className="bg-zinc-700/40 text-zinc-300 border-zinc-600/50 text-[10px]">Demo</Badge>
             </SheetTitle>
           </SheetHeader>
           <SubscriptionGate onUnlock={() => setUnlocked(true)} />
@@ -200,6 +201,7 @@ Format your response as JSON.`;
                 <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
                   <Crown className="h-2.5 w-2.5 mr-1" /> Pro
                 </Badge>
+                <Badge className="bg-zinc-700/40 text-zinc-300 border-zinc-600/50 text-[10px]">Demo</Badge>
               </SheetTitle>
               {connectedCount > 0 && (
                 <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px]">
@@ -251,7 +253,7 @@ Format your response as JSON.`;
               {activeTab === 'accounts' && (
                 <div className="space-y-3">
                   <p className="text-xs text-zinc-400">
-                    Connect your social accounts to enable direct post scheduling. Epi will queue posts for the linked handles.
+                    Demo account links enable preview scheduling flows. Validate all outputs before production use.
                   </p>
                   <SocialAccountsManager accounts={accounts} onConnect={connect} onDisconnect={disconnect} />
                   <div className="rounded-xl border border-zinc-800 bg-zinc-800/30 p-3 mt-2">

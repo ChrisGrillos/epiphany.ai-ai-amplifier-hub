@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,7 +47,7 @@ export default function CreateBridgeModal({ open, onOpenChange, vaultId, onSucce
         <DialogHeader>
           <DialogTitle>Create Bridge Conversation</DialogTitle>
           <DialogDescription className="text-zinc-400">
-            Set up a secure space where you, Epi, and external LLMs can collaborate
+            Set up an experimental bridge space where you, Epi, and external LLMs can collaborate
           </DialogDescription>
         </DialogHeader>
 
@@ -92,9 +92,9 @@ export default function CreateBridgeModal({ open, onOpenChange, vaultId, onSucce
             </p>
           </div>
 
-          <div className="bg-violet-500/10 border border-violet-500/30 rounded-lg p-3 text-xs text-violet-300">
-            <p className="font-semibold mb-1">🔒 Security Note</p>
-            <p>Bridge conversations run on neutral infrastructure. External LLMs only see what you explicitly share through the bridge.</p>
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-xs text-amber-200">
+            <p className="font-semibold mb-1">Experimental Preview</p>
+            <p>Bridge collaboration controls are still evolving. Validate outputs before treating them as production-safe.</p>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">

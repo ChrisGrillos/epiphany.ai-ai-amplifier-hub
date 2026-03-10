@@ -238,8 +238,9 @@ PROPOSE_FILE_UPDATE: <filename>
         ? `${conversationHistory}\n\nUser: ${userMessage.content}`
         : userMessage.content;
 
-      const { callLLMProvider } = await import('@/components/epi/workflowEngine');
-      let response = await callLLMProvider('base44', `${systemPrompt}\n\n${fullPrompt}`);
+      const { callLLMProvider, getActiveProvider } = await import('@/components/epi/workflowEngine');
+      const activeProvider = (await getActiveProvider().catch(() => 'base44')) || 'base44';
+      let response = await callLLMProvider(activeProvider, `${systemPrompt}\n\n${fullPrompt}`);
 
       if (typeof response !== 'string') {
         response = response.text || response.output || response.response || String(response);

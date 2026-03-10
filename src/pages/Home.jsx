@@ -47,7 +47,6 @@ import useGuardian from '@/hooks/useGuardian';
 import useMessaging from '@/hooks/useMessaging';
 import useTutorial from '@/hooks/useTutorial';
 import useModalState from '@/hooks/useModalState';
-import { getActiveProvider } from '@/components/epi/workflowEngine';
 import { Loader2 } from 'lucide-react';
 
 export default function Home() {
@@ -348,7 +347,7 @@ ${activeVault?.living_summary}`,
                     : 'text-zinc-400 hover:text-white'
                 }`}
               >
-                Bridge
+                Bridge (Experimental)
               </button>
               <button
                 onClick={() => setActiveMainTab('workflows')}
@@ -364,19 +363,19 @@ ${activeVault?.living_summary}`,
                 onClick={() => setShowMultiAgent(true)}
                 className="ml-auto px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                <span>??</span> Agents
+                <span>??</span> Agents (Experimental)
               </button>
               <button
                 onClick={() => setShowSocialPlugin(true)}
                 className="px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                <span>??</span> Social
+                <span>??</span> Social (Demo)
               </button>
               <button
                 onClick={() => setShowMergeLayer(true)}
                 className="px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                <span>??</span> Merge
+                <span>??</span> Merge (Experimental)
               </button>
               <button
                 onClick={() => setShowMultiApiSetup(true)}

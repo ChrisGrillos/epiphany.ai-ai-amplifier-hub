@@ -46,6 +46,9 @@ export default function BridgeConversations({ vault }) {
           <Badge variant="outline" className="border-violet-500/30 text-violet-400">
             {conversations.length} active
           </Badge>
+          <Badge variant="outline" className="border-amber-500/30 text-amber-300">
+            Experimental
+          </Badge>
         </div>
         <Button onClick={() => setShowCreate(true)} className="bg-emerald-600 hover:bg-emerald-500">
           <Plus className="h-4 w-4 mr-2" />
@@ -63,7 +66,7 @@ export default function BridgeConversations({ vault }) {
             <Shield className="h-16 w-16 text-zinc-700 mb-4" />
             <h3 className="text-lg font-semibold text-white mb-2">No Bridge Conversations</h3>
             <p className="text-sm text-zinc-400 mb-4 max-w-md">
-              Create secure bridge conversations where you, Epi, and external LLMs can collaborate without direct vault access.
+              Bridge is in preview. Use it to test context-sharing flows between you, Epi, and external LLMs.
             </p>
             <Button onClick={() => setShowCreate(true)}>
               <Plus className="h-4 w-4 mr-2" />
