@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -41,6 +41,7 @@ import ContextIndicator from '@/components/chat/ContextIndicator';
 import VaultMembersPanel from '@/components/collab/VaultMembersPanel';
 import useAuth from '@/hooks/useAuth';
 import useVaultSession from '@/hooks/useVaultSession';
+import useSynthesis from '@/hooks/useSynthesis';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
 import { userScopedEntities } from '@/components/lib/userScoped';
@@ -65,40 +66,6 @@ import { analyzeWorkflowDelegation, prepareAgentContext, generateOrchestrationMe
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 
-const SYNTHESIS_PROMPT = `You are updating a Living Summary for an ongoing workspace.
-
-You will receive:
-1) CURRENT LIVING SUMMARY
-2) NEW SESSION TRANSCRIPT
-
-Your task:
-- Add only NEW durable information (facts, decisions, constraints, definitions, plans).
-- Remove or update anything that is now outdated or contradicted.
-- Deduplicate aggressively.
-- Preserve clarity and a stable structure.
-
-Rules:
-- Prefer the most recent information if there is a conflict.
-- If uncertainty remains, label it explicitly as "Uncertain".
-- ⭐ Do NOT rephrase existing content unless its meaning has changed.
-- ⭐ Do NOT make stylistic edits for readability alone.
-- Keep total length under 1600 tokens.
-- Output ONLY the updated Living Summary using the exact structure below.
-- No commentary, no explanations.
-
-STRUCTURE:
-## Objective
-## Key Facts
-## Decisions
-## Open Questions
-## Next Actions
-
-CURRENT LIVING SUMMARY:
-{current_summary}
-
-NEW SESSION TRANSCRIPT:
-{transcript}`;
-
 export default function Home() {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef(null);
@@ -113,7 +80,6 @@ export default function Home() {
   const [showCreateVault, setShowCreateVault] = useState(false);
   const [showApiKeySetup, setShowApiKeySetup] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const [showSynthesisReview, setShowSynthesisReview] = useState(false);
   const [showAddReference, setShowAddReference] = useState(false);
   const [showReferencesList, setShowReferencesList] = useState(false);
   const [showReferenceDiff, setShowReferenceDiff] = useState(false);
@@ -132,8 +98,6 @@ export default function Home() {
   const [showMembers, setShowMembers] = useState(false);
   
   // Synthesis
-  const [proposedSummary, setProposedSummary] = useState('');
-  const [isSynthesizing, setIsSynthesizing] = useState(false);
   const [insightsLoading, setInsightsLoading] = useState(false);
   
   // References
@@ -587,110 +551,6 @@ PROPOSE_FILE_UPDATE: <filename>
     setIsLoading(false);
   };
 
-  const handleEndSession = async () => {
-    if (messages.length === 0) {
-      toast.error('No messages to synthesize');
-      return;
-    }
-
-    setIsSynthesizing(true);
-
-    try {
-      // Build transcript
-      const transcript = messages
-        .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-        .join('\n\n');
-
-      const prompt = SYNTHESIS_PROMPT
-        .replace('{current_summary}', activeVault?.living_summary || 'No existing summary.')
-        .replace('{transcript}', transcript);
-
-      const synthesized = await base44.integrations.Core.InvokeLLM({
-        prompt,
-      });
-
-      setProposedSummary(synthesized);
-      setShowSynthesisReview(true);
-    } catch (error) {
-      toast.error('Synthesis failed');
-      console.error(error);
-    }
-
-    setIsSynthesizing(false);
-  };
-
-  const handleAcceptSynthesis = async (finalSummary) => {
-    try {
-      await updateVaultMutation.mutateAsync({
-        id: activeVault.id,
-        data: { 
-          living_summary: finalSummary,
-          last_accessed: new Date().toISOString()
-        }
-      });
-
-      // Save session to history
-      await base44.entities.Session.create({
-        vault_id: activeVault.id,
-        title: `Session ${new Date().toLocaleDateString()}`,
-        messages,
-        status: 'completed',
-        started_at: activeSession?.started_at,
-        ended_at: new Date().toISOString(),
-        attached_reference_ids: selectedReferenceIds,
-        synthesis_result: {
-          proposed_summary: finalSummary,
-          accepted: true
-        }
-      });
-
-      setActiveVault(prev => ({ ...prev, living_summary: finalSummary }));
-      setShowSynthesisReview(false);
-      setMessages([]);
-      setSelectedReferenceIds([]);
-      toast.success('Living Summary updated');
-      
-      // Log Epi action
-      await logEpiAction(activeVault.id, 'synthesis_complete', epiLevel, 
-        { message_count: messages.length }, 
-        'Synthesis accepted and saved'
-      );
-      
-      // Run Guardian if enabled (and Epi level >= 3)
-      if (activeVault.run_guardian_after_synthesis && epiLevel >= 3) {
-        runGuardianCheck(finalSummary);
-      }
-      
-      // Generate Level 4 nudge if appropriate
-      if (epiLevel === 4) {
-        setTimeout(async () => {
-          const nudge = generateProactiveNudge(activeVault, [], references);
-          if (nudge) {
-            setEpiNudge(nudge);
-          } else {
-            // Check vault health periodically
-            const sessions = await base44.entities.Session.filter({ vault_id: activeVault.id });
-            const recommendations = await analyzeVaultHealth(activeVault, sessions, references);
-            if (recommendations.length > 0 && recommendations.some(r => r.severity === 'high' || r.severity === 'medium')) {
-              setEpiNudge({
-                type: 'vault_health',
-                message: `Vault health check: ${recommendations[0].title}`,
-                severity: recommendations[0].severity
-              });
-            }
-          }
-        }, 2000);
-      }
-    } catch (error) {
-      toast.error('Failed to save summary');
-    }
-  };
-
-  const handleRejectSynthesis = () => {
-    setShowSynthesisReview(false);
-    toast.info('Synthesis rejected - session continues');
-  };
-
   const handleUpdateInsights = (level) => {
     updateVaultMutation.mutate({
       id: activeVault.id,
@@ -857,6 +717,30 @@ If no issues, return: {"status": "ok", "notes": []}`;
     setGuardianLoading(false);
   };
 
+  const {
+    proposedSummary,
+    isSynthesizing,
+    showSynthesisReview,
+    setShowSynthesisReview,
+    handleEndSession,
+    handleAcceptSynthesis,
+    handleRejectSynthesis,
+  } = useSynthesis({
+    activeVault,
+    setActiveVault,
+    messages,
+    setMessages,
+    activeSession,
+    selectedReferenceIds,
+    setSelectedReferenceIds,
+    references,
+    updateVaultMutation,
+    epiLevel,
+    sessionManagerRef,
+    runGuardianCheck,
+    setEpiNudge,
+  });
+
   const handleUpdateEpiLevel = async (newLevel) => {
     try {
       if (appSettings) {
@@ -931,7 +815,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
         dismissed: true
       });
       setShowTutorial(false);
-      toast.success('Tutorial completed! 🎉');
+      toast.success('Tutorial completed! ??');
       setTimeout(() => setShowQuickTips(true), 1000);
     } catch (error) {
       console.error('Failed to complete tutorial:', error);
@@ -1007,25 +891,25 @@ If no issues, return: {"status": "ok", "notes": []}`;
                 onClick={() => setShowMultiAgent(true)}
                 className="ml-auto px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                <span>🤖</span> Agents
+                <span>??</span> Agents
               </button>
               <button
                 onClick={() => setShowSocialPlugin(true)}
                 className="px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                <span>📱</span> Social
+                <span>??</span> Social
               </button>
               <button
                 onClick={() => setShowMergeLayer(true)}
                 className="px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                <span>🔀</span> Merge
+                <span>??</span> Merge
               </button>
               <button
                 onClick={() => setShowMultiApiSetup(true)}
                 className="px-3 py-1.5 text-xs text-zinc-500 hover:text-white flex items-center gap-1.5 transition-colors"
               >
-                <span>🔑</span> API Keys
+                <span>??</span> API Keys
               </button>
             </div>
           </div>
@@ -1377,4 +1261,5 @@ If no issues, return: {"status": "ok", "notes": []}`;
     </div>
   );
 }
+
 
