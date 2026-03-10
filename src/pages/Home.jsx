@@ -256,13 +256,9 @@ ${activeVault?.living_summary}`,
     if (!pendingReferenceDiff) return;
     
     try {
-      // Update the reference content
-      await updateVaultMutation.mutateAsync({
-        id: pendingReferenceDiff.reference.id,
-        data: { 
-          full_content: newContent,
-          excerpt: newContent.substring(0, 500)
-        }
+      await base44.entities.Reference.update(pendingReferenceDiff.reference.id, {
+        full_content: newContent,
+        excerpt: newContent.substring(0, 500),
       });
       
       queryClient.invalidateQueries({ queryKey: ['references'] });
