@@ -39,6 +39,7 @@ import MultiAgentSession from '@/components/multiagent/MultiAgentSession';
 import SocialMediaPlugin from '@/components/social/SocialMediaPlugin';
 import ContextIndicator from '@/components/chat/ContextIndicator';
 import VaultMembersPanel from '@/components/collab/VaultMembersPanel';
+import useAuth from '@/hooks/useAuth';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
 import { userScopedEntities } from '@/components/lib/userScoped';
@@ -160,15 +161,7 @@ export default function Home() {
   const [tutorialProgress, setTutorialProgress] = useState(null);
 
   const [apiKey, setApiKey] = useState(true); // non-null signals "key may exist server-side"
-  const [currentUser, setCurrentUser] = useState(null);
-
-  // Load current user on mount
-  useEffect(() => {
-    base44.auth.me().then(u => setCurrentUser(u)).catch(() => {});
-  }, []);
-
-  // Scoped DB — only returns data owned by the current user
-  const db = currentUser ? userScopedEntities(currentUser) : null;
+  const { currentUser, db } = useAuth();
 
   // Queries
   const { data: vaults = [], isLoading: vaultsLoading } = useQuery({
@@ -1434,3 +1427,4 @@ If no issues, return: {"status": "ok", "notes": []}`;
     </div>
   );
 }
+
