@@ -40,6 +40,7 @@ import SocialMediaPlugin from '@/components/social/SocialMediaPlugin';
 import ContextIndicator from '@/components/chat/ContextIndicator';
 import VaultMembersPanel from '@/components/collab/VaultMembersPanel';
 import useAuth from '@/hooks/useAuth';
+import useVaultSession from '@/hooks/useVaultSession';
 import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
 import { userScopedEntities } from '@/components/lib/userScoped';
@@ -103,9 +104,6 @@ export default function Home() {
   const messagesEndRef = useRef(null);
   
   // State
-  const [activeVault, setActiveVault] = useState(null);
-  const [activeSession, setActiveSession] = useState(null);
-  const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [activeTab, setActiveTab] = useState('api');
@@ -139,7 +137,6 @@ export default function Home() {
   const [insightsLoading, setInsightsLoading] = useState(false);
   
   // References
-  const [selectedReferenceIds, setSelectedReferenceIds] = useState([]);
   const [pendingReferenceDiff, setPendingReferenceDiff] = useState(null);
   
   // Guardian
@@ -153,7 +150,6 @@ export default function Home() {
   
   // Session Manager
   const sessionManagerRef = useRef(null);
-  const [sessionAutoSaved, setSessionAutoSaved] = useState(false);
   
   // Tutorial
   const [showTutorial, setShowTutorial] = useState(false);
@@ -163,18 +159,28 @@ export default function Home() {
   const [apiKey, setApiKey] = useState(true); // non-null signals "key may exist server-side"
   const { currentUser, db } = useAuth();
 
-  // Queries
-  const { data: vaults = [], isLoading: vaultsLoading } = useQuery({
-    queryKey: ['vaults', currentUser?.email],
-    queryFn: () => db ? db.Vault.list('-last_accessed') : [],
-    enabled: !!db,
-  });
-
-  const { data: references = [], refetch } = useQuery({
-    queryKey: ['references', activeVault?.id, currentUser?.email],
-    queryFn: () => (db && activeVault) ? db.Reference.filter({ vault_id: activeVault.id }) : [],
-    enabled: !!db && !!activeVault,
-  });
+  const {
+    vaults,
+    vaultsLoading,
+    activeVault,
+    setActiveVault,
+    activeSession,
+    setActiveSession,
+    messages,
+    setMessages,
+    references,
+    refetchReferences,
+    selectedReferenceIds,
+    setSelectedReferenceIds,
+    sessionAutoSaved,
+    setSessionAutoSaved,
+    createVaultMutation,
+    updateVaultMutation,
+    startNewSession,
+    handleSelectVault,
+    toggleReferenceSelection,
+    handleDeleteReference,
+  } = useVaultSession({ currentUser, db });
 
   // Load app settings for Epi and tutorial progress
   useEffect(() => {
@@ -316,44 +322,6 @@ export default function Home() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamingContent]);
-
-  // Create vault mutation
-  const createVaultMutation = useMutation({
-    mutationFn: (data) => base44.entities.Vault.create(data),
-    onSuccess: (newVault) => {
-      queryClient.invalidateQueries({ queryKey: ['vaults', currentUser?.email] });
-      setActiveVault(newVault);
-      startNewSession(newVault);
-      toast.success('Vault created');
-    },
-  });
-
-  // Update vault mutation
-  const updateVaultMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Vault.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vaults', currentUser?.email] });
-    },
-  });
-
-  const startNewSession = (vault) => {
-    setMessages([]);
-    setActiveSession({
-      vault_id: vault.id,
-      started_at: new Date().toISOString(),
-      messages: []
-    });
-    // Update last accessed
-    updateVaultMutation.mutate({
-      id: vault.id,
-      data: { last_accessed: new Date().toISOString() }
-    });
-  };
-
-  const handleSelectVault = (vault) => {
-    setActiveVault(vault);
-    startNewSession(vault);
-  };
 
   const handleSaveApiKey = async () => {
     // Keys are now saved via workflowEngine.saveProviderKey -> llmProxy backend
@@ -756,16 +724,6 @@ ${activeVault?.living_summary}`,
     handleSendMessage({ content: suggestion, image_urls: [] });
   };
 
-  const handleDeleteReference = async (refId) => {
-    try {
-      await base44.entities.Reference.delete(refId);
-      queryClient.invalidateQueries({ queryKey: ['references'] });
-      toast.success('Reference deleted');
-    } catch (error) {
-      toast.error('Failed to delete reference');
-    }
-  };
-
   const handleAcceptReferenceDiff = async (newContent) => {
     if (!pendingReferenceDiff) return;
     
@@ -897,14 +855,6 @@ If no issues, return: {"status": "ok", "notes": []}`;
     }
 
     setGuardianLoading(false);
-  };
-
-  const toggleReferenceSelection = (refId) => {
-    setSelectedReferenceIds(prev => 
-      prev.includes(refId) 
-        ? prev.filter(id => id !== refId)
-        : [...prev, refId]
-    );
   };
 
   const handleUpdateEpiLevel = async (newLevel) => {
@@ -1420,7 +1370,7 @@ If no issues, return: {"status": "ok", "notes": []}`;
         vaultId={activeVault?.id}
         references={references}
         onArchiveComplete={() => {
-          refetch();
+          refetchReferences();
           toast.success('References archived successfully');
         }}
       />
