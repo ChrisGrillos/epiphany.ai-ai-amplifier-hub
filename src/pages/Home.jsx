@@ -47,6 +47,7 @@ import useSessionManager from '@/hooks/useSessionManager';
 import useGuardian from '@/hooks/useGuardian';
 import useMessaging from '@/hooks/useMessaging';
 import useTutorial from '@/hooks/useTutorial';
+import useModalState from '@/hooks/useModalState';
 import { logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
 import { 
@@ -71,24 +72,60 @@ export default function Home() {
   
   
   // Modals
-  const [showCreateVault, setShowCreateVault] = useState(false);
-  const [showApiKeySetup, setShowApiKeySetup] = useState(false);
-  const [showSummary, setShowSummary] = useState(false);
-  const [showAddReference, setShowAddReference] = useState(false);
-  const [showReferencesList, setShowReferencesList] = useState(false);
-  const [showReferenceDiff, setShowReferenceDiff] = useState(false);
-  const [showImportChat, setShowImportChat] = useState(false);
-  const [showCalendarExport, setShowCalendarExport] = useState(false);
-  const [showEmailDraft, setShowEmailDraft] = useState(false);
-  const [showEpiSettings, setShowEpiSettings] = useState(false);
-  const [showEpiChat, setShowEpiChat] = useState(false);
+  const { modals, setModalOpen } = useModalState({
+    createVault: false,
+    apiKeySetup: false,
+    summary: false,
+    addReference: false,
+    referencesList: false,
+    referenceDiff: false,
+    importChat: false,
+    calendarExport: false,
+    emailDraft: false,
+    epiSettings: false,
+    epiChat: false,
+    archival: false,
+    multiApiSetup: false,
+    mergeLayer: false,
+    multiAgent: false,
+    socialPlugin: false,
+    members: false,
+  });
+  const showCreateVault = modals.createVault;
+  const setShowCreateVault = (value) => setModalOpen('createVault', value);
+  const showApiKeySetup = modals.apiKeySetup;
+  const setShowApiKeySetup = (value) => setModalOpen('apiKeySetup', value);
+  const showSummary = modals.summary;
+  const setShowSummary = (value) => setModalOpen('summary', value);
+  const showAddReference = modals.addReference;
+  const setShowAddReference = (value) => setModalOpen('addReference', value);
+  const showReferencesList = modals.referencesList;
+  const setShowReferencesList = (value) => setModalOpen('referencesList', value);
+  const showReferenceDiff = modals.referenceDiff;
+  const setShowReferenceDiff = (value) => setModalOpen('referenceDiff', value);
+  const showImportChat = modals.importChat;
+  const setShowImportChat = (value) => setModalOpen('importChat', value);
+  const showCalendarExport = modals.calendarExport;
+  const setShowCalendarExport = (value) => setModalOpen('calendarExport', value);
+  const showEmailDraft = modals.emailDraft;
+  const setShowEmailDraft = (value) => setModalOpen('emailDraft', value);
+  const showEpiSettings = modals.epiSettings;
+  const setShowEpiSettings = (value) => setModalOpen('epiSettings', value);
+  const showEpiChat = modals.epiChat;
+  const setShowEpiChat = (value) => setModalOpen('epiChat', value);
   const [activeMainTab, setActiveMainTab] = useState('chat');
-  const [showArchival, setShowArchival] = useState(false);
-  const [showMultiApiSetup, setShowMultiApiSetup] = useState(false);
-  const [showMergeLayer, setShowMergeLayer] = useState(false);
-  const [showMultiAgent, setShowMultiAgent] = useState(false);
-  const [showSocialPlugin, setShowSocialPlugin] = useState(false);
-  const [showMembers, setShowMembers] = useState(false);
+  const showArchival = modals.archival;
+  const setShowArchival = (value) => setModalOpen('archival', value);
+  const showMultiApiSetup = modals.multiApiSetup;
+  const setShowMultiApiSetup = (value) => setModalOpen('multiApiSetup', value);
+  const showMergeLayer = modals.mergeLayer;
+  const setShowMergeLayer = (value) => setModalOpen('mergeLayer', value);
+  const showMultiAgent = modals.multiAgent;
+  const setShowMultiAgent = (value) => setModalOpen('multiAgent', value);
+  const showSocialPlugin = modals.socialPlugin;
+  const setShowSocialPlugin = (value) => setModalOpen('socialPlugin', value);
+  const showMembers = modals.members;
+  const setShowMembers = (value) => setModalOpen('members', value);
   
   // Synthesis
   const [insightsLoading, setInsightsLoading] = useState(false);
