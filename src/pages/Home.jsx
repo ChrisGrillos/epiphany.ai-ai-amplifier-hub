@@ -583,8 +583,8 @@ PROPOSE_FILE_UPDATE: <filename>
       const conversationHistory = messages.map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n\n');
 
       const fullPrompt = conversationHistory 
-        ? `${conversationHistory}\n\nUser: ${content}`
-        : content;
+        ? `${conversationHistory}\n\nUser: ${userMessage.content}`
+        : userMessage.content;
 
       // All LLM calls route through the secure backend proxy
       const { callLLMProvider } = await import('@/components/epi/workflowEngine');
