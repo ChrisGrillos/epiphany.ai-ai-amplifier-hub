@@ -43,6 +43,7 @@ import useAuth from '@/hooks/useAuth';
 import useVaultSession from '@/hooks/useVaultSession';
 import useSynthesis from '@/hooks/useSynthesis';
 import useEpi from '@/hooks/useEpi';
+import useSessionManager from '@/hooks/useSessionManager';
 import { logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
 import { userScopedEntities } from '@/components/lib/userScoped';
@@ -54,13 +55,6 @@ import {
   generateVaultSnapshot 
 } from '@/components/epi/epiPasteUtils';
 import { estimateTokens, needsLLMAssist, truncateToTokenLimit } from '@/components/epi/tokenUtils';
-import { 
-  SessionManager, 
-  shouldAutoCloseSession, 
-  generateSessionSummary, 
-  suggestNextActions,
-  generateSessionTitle 
-} from '@/components/session/sessionManager';
 import { analyzeVaultHealth, getVaultHealthScore, formatHealthReport } from '@/components/epi/vaultHealth';
 import { analyzeWorkflowDelegation, prepareAgentContext, generateOrchestrationMessage, shouldAutoExecuteWorkflow } from '@/components/epi/workflowOrchestration';
 
@@ -107,9 +101,6 @@ export default function Home() {
   // Guardian
   const [guardianNotes, setGuardianNotes] = useState([]);
   const [guardianLoading, setGuardianLoading] = useState(false);
-  
-  // Session Manager
-  const sessionManagerRef = useRef(null);
   
   // Tutorial
   const [showTutorial, setShowTutorial] = useState(false);
@@ -190,89 +181,18 @@ export default function Home() {
     }
   }, [tutorialProgress]);
 
-  // Session Management - Auto-save and Auto-close
-  useEffect(() => {
-    if (activeVault && activeSession && messages.length > 0) {
-      // Start session manager
-      if (!sessionManagerRef.current) {
-        sessionManagerRef.current = new SessionManager(
-          activeVault,
-          // Auto-save handler
-          async () => {
-            if (messages.length > 0) {
-              try {
-                // Update session in background
-                const title = generateSessionTitle(messages);
-                await base44.entities.Session.create({
-                  vault_id: activeVault.id,
-                  title: `${title} (auto-saved)`,
-                  messages,
-                  status: 'active',
-                  started_at: activeSession.started_at,
-                  attached_reference_ids: selectedReferenceIds,
-                });
-                setSessionAutoSaved(true);
-                setTimeout(() => setSessionAutoSaved(false), 2000);
-              } catch (error) {
-                console.error('Auto-save failed:', error);
-              }
-            }
-          },
-          // Auto-close handler
-          async () => {
-            if (shouldAutoCloseSession(activeSession, messages)) {
-              // Generate summary
-              const summary = generateSessionSummary(messages, references.filter(r => selectedReferenceIds.includes(r.id)));
-              const nextActions = suggestNextActions(summary, activeVault);
-              
-              // Save session
-              const title = generateSessionTitle(messages);
-              await base44.entities.Session.create({
-                vault_id: activeVault.id,
-                title: `${title} (auto-closed)`,
-                messages,
-                status: 'completed',
-                started_at: activeSession.started_at,
-                ended_at: new Date().toISOString(),
-                attached_reference_ids: selectedReferenceIds,
-              });
-              
-              // Log Epi action
-              await logEpiAction(activeVault.id, 'session_end', epiLevel,
-                { auto_closed: true, message_count: messages.length },
-                summary
-              );
-              
-              // Show notification with suggestions
-              toast.info('Session auto-closed due to inactivity', {
-                description: nextActions.length > 0 ? nextActions[0].description : 'Session saved to history'
-              });
-              
-              // Reset session
-              setMessages([]);
-              setActiveSession(null);
-              setSelectedReferenceIds([]);
-              
-              // Stop session manager
-              if (sessionManagerRef.current) {
-                sessionManagerRef.current.stop();
-                sessionManagerRef.current = null;
-              }
-            }
-          }
-        );
-        sessionManagerRef.current.start();
-      }
-    }
-    
-    // Cleanup on unmount or vault change
-    return () => {
-      if (sessionManagerRef.current) {
-        sessionManagerRef.current.stop();
-        sessionManagerRef.current = null;
-      }
-    };
-  }, [activeVault, activeSession, messages.length]);
+  const { sessionManagerRef } = useSessionManager({
+    activeVault,
+    activeSession,
+    messages,
+    selectedReferenceIds,
+    references,
+    epiLevel,
+    setMessages,
+    setActiveSession,
+    setSelectedReferenceIds,
+    setSessionAutoSaved,
+  });
 
   // Scroll to bottom
   useEffect(() => {
