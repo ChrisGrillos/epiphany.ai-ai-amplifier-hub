@@ -91,7 +91,7 @@ export default function useMessaging({
           'Health check complete'
         );
       }
-      if (detectWebChatPaste(content)) {
+      else if (detectWebChatPaste(content)) {
         const parsedMessages = parseWebChat(content);
 
         if (needsLLMAssist(content) && apiKey) {
