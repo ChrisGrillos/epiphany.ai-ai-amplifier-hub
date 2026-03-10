@@ -42,7 +42,8 @@ import VaultMembersPanel from '@/components/collab/VaultMembersPanel';
 import useAuth from '@/hooks/useAuth';
 import useVaultSession from '@/hooks/useVaultSession';
 import useSynthesis from '@/hooks/useSynthesis';
-import { getEffectiveEpiLevel, logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
+import useEpi from '@/hooks/useEpi';
+import { logEpiAction, shouldEpiSpeak, generateProactiveNudge, prepareContextPack } from '@/components/epi/epiUtils';
 import { getActiveProvider } from '@/components/epi/workflowEngine';
 import { userScopedEntities } from '@/components/lib/userScoped';
 import { 
@@ -107,11 +108,6 @@ export default function Home() {
   const [guardianNotes, setGuardianNotes] = useState([]);
   const [guardianLoading, setGuardianLoading] = useState(false);
   
-  // Epi
-  const [epiLevel, setEpiLevel] = useState(1);
-  const [epiNudge, setEpiNudge] = useState(null);
-  const [appSettings, setAppSettings] = useState(null);
-  
   // Session Manager
   const sessionManagerRef = useRef(null);
   
@@ -146,19 +142,22 @@ export default function Home() {
     handleDeleteReference,
   } = useVaultSession({ currentUser, db });
 
-  // Load app settings for Epi and tutorial progress
+  const {
+    epiLevel,
+    setEpiLevel,
+    epiNudge,
+    setEpiNudge,
+    appSettings,
+    handleUpdateEpiLevel,
+  } = useEpi({ activeVault, db });
+
+  // Load tutorial progress
   useEffect(() => {
     const loadSettings = async () => {
       try {
         const user = await base44.auth.me();
         if (!user) return;
         const scopedDb = userScopedEntities(user);
-
-        const settings = await scopedDb.AppSettings.list();
-        if (settings.length > 0) {
-          setAppSettings(settings[0]);
-          setEpiLevel(getEffectiveEpiLevel(activeVault, settings[0]));
-        }
         
         // Load tutorial progress
         const progress = await scopedDb.TutorialProgress.list();
@@ -177,7 +176,7 @@ export default function Home() {
           setShowTutorial(true);
         }
       } catch (error) {
-        console.error('Failed to load settings:', error);
+        console.error('Failed to load tutorial progress:', error);
       }
     };
     loadSettings();
@@ -190,13 +189,6 @@ export default function Home() {
       return () => clearTimeout(timer);
     }
   }, [tutorialProgress]);
-
-  // Update Epi level when vault changes
-  useEffect(() => {
-    if (activeVault && appSettings) {
-      setEpiLevel(getEffectiveEpiLevel(activeVault, appSettings));
-    }
-  }, [activeVault, appSettings]);
 
   // Session Management - Auto-save and Auto-close
   useEffect(() => {
@@ -740,22 +732,6 @@ If no issues, return: {"status": "ok", "notes": []}`;
     runGuardianCheck,
     setEpiNudge,
   });
-
-  const handleUpdateEpiLevel = async (newLevel) => {
-    try {
-      if (appSettings) {
-        await base44.entities.AppSettings.update(appSettings.id, { epi_level: newLevel });
-        setAppSettings(prev => ({ ...prev, epi_level: newLevel }));
-      } else {
-        const settings = await base44.entities.AppSettings.create({ epi_level: newLevel });
-        setAppSettings(settings);
-      }
-      setEpiLevel(newLevel);
-      toast.success(`Epi set to Level ${newLevel}`);
-    } catch (error) {
-      toast.error('Failed to update Epi level');
-    }
-  };
 
   const handleCopyLivingSummary = () => {
     navigator.clipboard.writeText(activeVault?.living_summary || '');
