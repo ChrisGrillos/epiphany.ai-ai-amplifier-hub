@@ -13,7 +13,6 @@ import EmailDraft from '@/components/email/EmailDraft';
 import EpiSettings from '@/components/epi/EpiSettings';
 import EpiChat from '@/components/epi/EpiChat';
 import EpiNudge from '@/components/epi/EpiNudge';
-import EpiAvatar from '@/components/epi/EpiAvatar';
 import OnboardingTutorial from '@/components/tutorial/OnboardingTutorial';
 import QuickTips from '@/components/tutorial/QuickTips';
 import MultiApiKeySetup from '@/components/settings/MultiApiKeySetup';
@@ -24,85 +23,85 @@ import CrossModelMergeLayer from '@/components/merge/CrossModelMergeLayer';
 import ReferenceArchival from '@/components/references/ReferenceArchival';
 import ApiKeySetup from '@/components/settings/ApiKeySetup';
 
-export default function HomeModals({
-  showCreateVault,
-  setShowCreateVault,
-  createVaultMutation,
-  showApiKeySetup,
-  setShowApiKeySetup,
-  handleSaveApiKey,
-  apiKey,
-  showSummary,
-  setShowSummary,
-  activeVault,
-  handleCheckInsights,
-  setActiveTab,
-  showSynthesisReview,
-  setShowSynthesisReview,
-  proposedSummary,
-  handleAcceptSynthesis,
-  handleRejectSynthesis,
-  isSynthesizing,
-  showAddReference,
-  setShowAddReference,
-  queryClient,
-  showReferencesList,
-  setShowReferencesList,
-  references,
-  handleDeleteReference,
-  handleSendMessage,
-  showReferenceDiff,
-  setShowReferenceDiff,
-  pendingReferenceDiff,
-  handleAcceptReferenceDiff,
-  showImportChat,
-  setShowImportChat,
-  handleImportWebChat,
-  messages,
-  showGuardian,
-  setShowGuardian,
-  guardianNotes,
-  guardianLoading,
-  runGuardianCheck,
-  setGuardianNotes,
-  showCalendarExport,
-  setShowCalendarExport,
-  showEmailDraft,
-  setShowEmailDraft,
-  showEpiSettings,
-  setShowEpiSettings,
-  epiLevel,
-  handleUpdateEpiLevel,
-  showEpiChat,
-  setShowEpiChat,
-  epiNudge,
-  setEpiNudge,
-  isLoading,
-  activeTab,
-  showTutorial,
-  setShowTutorial,
-  tutorialProgress,
-  handleUpdateTutorialProgress,
-  handleCompleteTutorial,
-  showQuickTips,
-  setShowQuickTips,
-  showMultiApiSetup,
-  setShowMultiApiSetup,
-  showMultiAgent,
-  setShowMultiAgent,
-  showSocialPlugin,
-  setShowSocialPlugin,
-  showMembers,
-  setShowMembers,
-  showMergeLayer,
-  setShowMergeLayer,
-  showArchival,
-  setShowArchival,
-  refetchReferences,
-  handleEndSession,
-  setPendingReferenceDiff,
-  insightsLoading,
-}) {
+export default function HomeModals({ home }) {
+  const {
+    showCreateVault,
+    setShowCreateVault,
+    createVaultMutation,
+    showApiKeySetup,
+    setShowApiKeySetup,
+    handleSaveApiKey,
+    apiKey,
+    showSummary,
+    setShowSummary,
+    activeVault,
+    handleCheckInsights,
+    setActiveTab,
+    showSynthesisReview,
+    setShowSynthesisReview,
+    proposedSummary,
+    handleAcceptSynthesis,
+    handleRejectSynthesis,
+    isSynthesizing,
+    showAddReference,
+    setShowAddReference,
+    queryClient,
+    showReferencesList,
+    setShowReferencesList,
+    references,
+    handleDeleteReference,
+    handleSendMessage,
+    showReferenceDiff,
+    setShowReferenceDiff,
+    pendingReferenceDiff,
+    handleAcceptReferenceDiff,
+    showImportChat,
+    setShowImportChat,
+    handleImportWebChat,
+    messages,
+    showGuardian,
+    setShowGuardian,
+    guardianNotes,
+    guardianLoading,
+    runGuardianCheck,
+    onDismissGuardianNote,
+    showCalendarExport,
+    setShowCalendarExport,
+    showEmailDraft,
+    setShowEmailDraft,
+    showEpiSettings,
+    setShowEpiSettings,
+    epiLevel,
+    handleUpdateEpiLevel,
+    showEpiChat,
+    setShowEpiChat,
+    epiNudge,
+    setEpiNudge,
+    showTutorial,
+    setShowTutorial,
+    tutorialProgress,
+    handleUpdateTutorialProgress,
+    handleCompleteTutorial,
+    showQuickTips,
+    onDismissQuickTips,
+    showMultiApiSetup,
+    setShowMultiApiSetup,
+    showMultiAgent,
+    setShowMultiAgent,
+    showSocialPlugin,
+    setShowSocialPlugin,
+    showMembers,
+    setShowMembers,
+    showMergeLayer,
+    setShowMergeLayer,
+    showArchival,
+    setShowArchival,
+    refetchReferences,
+    handleEndSession,
+    setPendingReferenceDiff,
+    insightsLoading,
+  } = home;
+
   return (
     <>
       <CreateVaultModal
@@ -209,7 +208,7 @@ export default function HomeModals({
         notes={guardianNotes}
         isLoading={guardianLoading}
         onCheckNow={() => runGuardianCheck()}
-        onDismissNote={(idx) => setGuardianNotes(prev => prev.filter((_, i) => i !== idx))}
+        onDismissNote={onDismissGuardianNote}
         vaultName={activeVault?.name}
       />
 
@@ -256,21 +255,6 @@ export default function HomeModals({
         />
       )}
 
-      <div className="fixed bottom-6 left-6 z-50">
-        <EpiAvatar
-          onClick={() => setShowEpiSettings(true)}
-          state={
-            epiNudge
-              ? 'alert'
-              : isSynthesizing
-              ? 'thinking'
-              : isLoading
-              ? (activeTab === 'epi' ? 'thinking' : 'speaking')
-              : 'idle'
-          }
-        />
-      </div>
-
       <OnboardingTutorial
         open={showTutorial}
         onOpenChange={setShowTutorial}
@@ -279,14 +263,11 @@ export default function HomeModals({
         onComplete={handleCompleteTutorial}
       />
 
-      {showQuickTips && (
-        <QuickTips onDismiss={() => setShowQuickTips(false)} />
-      )}
+      {showQuickTips && <QuickTips onDismiss={onDismissQuickTips} />}
 
       <MultiApiKeySetup
         open={showMultiApiSetup}
         onOpenChange={setShowMultiApiSetup}
-        onProviderChange={() => {}}
       />
 
       <MultiAgentSession

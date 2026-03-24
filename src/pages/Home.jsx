@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import VaultSidebar from '@/components/vault/VaultSidebar';
 import HomeMainContent from '@/components/home/HomeMainContent';
 import HomeModals from '@/components/home/HomeModals';
+import EpiAvatar from '@/components/epi/EpiAvatar';
 import useAuth from '@/hooks/useAuth';
 import useVaultSession from '@/hooks/useVaultSession';
 import useSynthesis from '@/hooks/useSynthesis';
@@ -237,6 +238,14 @@ ${activeVault?.living_summary}`,
     }
   };
 
+  const handleDismissGuardianNote = (idx) => {
+    setGuardianNotes(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDismissQuickTips = () => {
+    setShowQuickTips(false);
+  };
+
   const {
     proposedSummary,
     isSynthesizing,
@@ -281,128 +290,144 @@ ${activeVault?.living_summary}`,
       />
 
       <HomeMainContent
-        activeVault={activeVault}
-        activeMainTab={activeMainTab}
-        setActiveMainTab={setActiveMainTab}
-        setShowMultiAgent={setShowMultiAgent}
-        setShowSocialPlugin={setShowSocialPlugin}
-        setShowMergeLayer={setShowMergeLayer}
-        setShowMultiApiSetup={setShowMultiApiSetup}
-        setShowCreateVault={setShowCreateVault}
-        setShowSummary={setShowSummary}
-        handleEndSession={handleEndSession}
-        apiKey={apiKey}
-        messages={messages}
-        handleStartPrompt={handleStartPrompt}
-        activeSession={activeSession}
-        handleUpdateInsights={handleUpdateInsights}
-        setShowReferencesList={setShowReferencesList}
-        setShowImportChat={setShowImportChat}
-        handleExportContextPack={handleExportContextPack}
-        setShowGuardian={setShowGuardian}
-        epiLevel={epiLevel}
-        setShowEpiChat={setShowEpiChat}
-        setShowCalendarExport={setShowCalendarExport}
-        setShowEmailDraft={setShowEmailDraft}
-        setShowArchival={setShowArchival}
-        setShowMembers={setShowMembers}
-        references={references}
-        handleCopyLivingSummary={handleCopyLivingSummary}
-        handleCopySessionThread={handleCopySessionThread}
-        handleCopyContextPack={handleCopyContextPack}
-        lastContextPack={lastContextPack}
-        selectedReferenceIds={selectedReferenceIds}
-        isLoading={isLoading}
-        streamingContent={streamingContent}
-        messagesEndRef={messagesEndRef}
-        toggleReferenceSelection={toggleReferenceSelection}
-        sessionAutoSaved={sessionAutoSaved}
-        activeTab={activeTab}
-        isSynthesizing={isSynthesizing}
-        handleSendMessage={handleSendMessage}
-        setActiveTab={setActiveTab}
+        home={{
+          activeVault,
+          activeMainTab,
+          setActiveMainTab,
+          setShowMultiAgent,
+          setShowSocialPlugin,
+          setShowMergeLayer,
+          setShowMultiApiSetup,
+          setShowCreateVault,
+          setShowSummary,
+          handleEndSession,
+          apiKey,
+          messages,
+          handleStartPrompt,
+          activeSession,
+          handleUpdateInsights,
+          setShowReferencesList,
+          setShowImportChat,
+          handleExportContextPack,
+          setShowGuardian,
+          epiLevel,
+          setShowEpiChat,
+          setShowCalendarExport,
+          setShowEmailDraft,
+          setShowArchival,
+          setShowMembers,
+          references,
+          handleCopyLivingSummary,
+          handleCopySessionThread,
+          handleCopyContextPack,
+          lastContextPack,
+          selectedReferenceIds,
+          isLoading,
+          streamingContent,
+          messagesEndRef,
+          toggleReferenceSelection,
+          sessionAutoSaved,
+          activeTab,
+          isSynthesizing,
+          handleSendMessage,
+          setActiveTab,
+        }}
       />
 
       <HomeModals
-        showCreateVault={showCreateVault}
-        setShowCreateVault={setShowCreateVault}
-        createVaultMutation={createVaultMutation}
-        showApiKeySetup={showApiKeySetup}
-        setShowApiKeySetup={setShowApiKeySetup}
-        handleSaveApiKey={handleSaveApiKey}
-        apiKey={apiKey}
-        showSummary={showSummary}
-        setShowSummary={setShowSummary}
-        activeVault={activeVault}
-        handleCheckInsights={handleCheckInsights}
-        setActiveTab={setActiveTab}
-        showSynthesisReview={showSynthesisReview}
-        setShowSynthesisReview={setShowSynthesisReview}
-        proposedSummary={proposedSummary}
-        handleAcceptSynthesis={handleAcceptSynthesis}
-        handleRejectSynthesis={handleRejectSynthesis}
-        isSynthesizing={isSynthesizing}
-        showAddReference={showAddReference}
-        setShowAddReference={setShowAddReference}
-        queryClient={queryClient}
-        showReferencesList={showReferencesList}
-        setShowReferencesList={setShowReferencesList}
-        references={references}
-        handleDeleteReference={handleDeleteReference}
-        handleSendMessage={handleSendMessage}
-        showReferenceDiff={showReferenceDiff}
-        setShowReferenceDiff={setShowReferenceDiff}
-        pendingReferenceDiff={pendingReferenceDiff}
-        handleAcceptReferenceDiff={handleAcceptReferenceDiff}
-        showImportChat={showImportChat}
-        setShowImportChat={setShowImportChat}
-        handleImportWebChat={handleImportWebChat}
-        messages={messages}
-        showGuardian={showGuardian}
-        setShowGuardian={setShowGuardian}
-        guardianNotes={guardianNotes}
-        guardianLoading={guardianLoading}
-        runGuardianCheck={runGuardianCheck}
-        setGuardianNotes={setGuardianNotes}
-        showCalendarExport={showCalendarExport}
-        setShowCalendarExport={setShowCalendarExport}
-        showEmailDraft={showEmailDraft}
-        setShowEmailDraft={setShowEmailDraft}
-        showEpiSettings={showEpiSettings}
-        setShowEpiSettings={setShowEpiSettings}
-        epiLevel={epiLevel}
-        handleUpdateEpiLevel={handleUpdateEpiLevel}
-        showEpiChat={showEpiChat}
-        setShowEpiChat={setShowEpiChat}
-        epiNudge={epiNudge}
-        setEpiNudge={setEpiNudge}
-        isLoading={isLoading}
-        activeTab={activeTab}
-        showTutorial={showTutorial}
-        setShowTutorial={setShowTutorial}
-        tutorialProgress={tutorialProgress}
-        handleUpdateTutorialProgress={handleUpdateTutorialProgress}
-        handleCompleteTutorial={handleCompleteTutorial}
-        showQuickTips={showQuickTips}
-        setShowQuickTips={setShowQuickTips}
-        showMultiApiSetup={showMultiApiSetup}
-        setShowMultiApiSetup={setShowMultiApiSetup}
-        showMultiAgent={showMultiAgent}
-        setShowMultiAgent={setShowMultiAgent}
-        showSocialPlugin={showSocialPlugin}
-        setShowSocialPlugin={setShowSocialPlugin}
-        showMembers={showMembers}
-        setShowMembers={setShowMembers}
-        showMergeLayer={showMergeLayer}
-        setShowMergeLayer={setShowMergeLayer}
-        showArchival={showArchival}
-        setShowArchival={setShowArchival}
-        refetchReferences={refetchReferences}
-        handleEndSession={handleEndSession}
-        setPendingReferenceDiff={setPendingReferenceDiff}
-        insightsLoading={insightsLoading}
+        home={{
+          showCreateVault,
+          setShowCreateVault,
+          createVaultMutation,
+          showApiKeySetup,
+          setShowApiKeySetup,
+          handleSaveApiKey,
+          apiKey,
+          showSummary,
+          setShowSummary,
+          activeVault,
+          handleCheckInsights,
+          setActiveTab,
+          showSynthesisReview,
+          setShowSynthesisReview,
+          proposedSummary,
+          handleAcceptSynthesis,
+          handleRejectSynthesis,
+          isSynthesizing,
+          showAddReference,
+          setShowAddReference,
+          queryClient,
+          showReferencesList,
+          setShowReferencesList,
+          references,
+          handleDeleteReference,
+          handleSendMessage,
+          showReferenceDiff,
+          setShowReferenceDiff,
+          pendingReferenceDiff,
+          handleAcceptReferenceDiff,
+          showImportChat,
+          setShowImportChat,
+          handleImportWebChat,
+          messages,
+          showGuardian,
+          setShowGuardian,
+          guardianNotes,
+          guardianLoading,
+          runGuardianCheck,
+          onDismissGuardianNote: handleDismissGuardianNote,
+          showCalendarExport,
+          setShowCalendarExport,
+          showEmailDraft,
+          setShowEmailDraft,
+          showEpiSettings,
+          setShowEpiSettings,
+          epiLevel,
+          handleUpdateEpiLevel,
+          showEpiChat,
+          setShowEpiChat,
+          epiNudge,
+          setEpiNudge,
+          showTutorial,
+          setShowTutorial,
+          tutorialProgress,
+          handleUpdateTutorialProgress,
+          handleCompleteTutorial,
+          showQuickTips,
+          onDismissQuickTips: handleDismissQuickTips,
+          showMultiApiSetup,
+          setShowMultiApiSetup,
+          showMultiAgent,
+          setShowMultiAgent,
+          showSocialPlugin,
+          setShowSocialPlugin,
+          showMembers,
+          setShowMembers,
+          showMergeLayer,
+          setShowMergeLayer,
+          showArchival,
+          setShowArchival,
+          refetchReferences,
+          handleEndSession,
+          setPendingReferenceDiff,
+          insightsLoading,
+        }}
       />
+
+      <div className="fixed bottom-6 left-6 z-50">
+        <EpiAvatar
+          onClick={() => setShowEpiSettings(true)}
+          state={
+            epiNudge
+              ? 'alert'
+              : isSynthesizing
+              ? 'thinking'
+              : isLoading
+              ? (activeTab === 'epi' ? 'thinking' : 'speaking')
+              : 'idle'
+          }
+        />
+      </div>
     </div>
   );
 }
-

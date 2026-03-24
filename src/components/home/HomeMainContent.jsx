@@ -11,48 +11,53 @@ import WorkflowsPanel from '@/components/workflow/WorkflowsPanel';
 import BridgeConversations from '@/components/bridge/BridgeConversations';
 import ContextIndicator from '@/components/chat/ContextIndicator';
 
-export default function HomeMainContent({
-  activeVault,
-  activeMainTab,
-  setActiveMainTab,
-  setShowMultiAgent,
-  setShowSocialPlugin,
-  setShowMergeLayer,
-  setShowMultiApiSetup,
-  setShowCreateVault,
-  setShowSummary,
-  handleEndSession,
-  apiKey,
-  messages,
-  handleStartPrompt,
-  activeSession,
-  handleUpdateInsights,
-  setShowReferencesList,
-  setShowImportChat,
-  handleExportContextPack,
-  setShowGuardian,
-  epiLevel,
-  setShowEpiChat,
-  setShowCalendarExport,
-  setShowEmailDraft,
-  setShowArchival,
-  setShowMembers,
-  references,
-  handleCopyLivingSummary,
-  handleCopySessionThread,
-  handleCopyContextPack,
-  lastContextPack,
-  selectedReferenceIds,
-  isLoading,
-  streamingContent,
-  messagesEndRef,
-  toggleReferenceSelection,
-  sessionAutoSaved,
-  activeTab,
-  isSynthesizing,
-  handleSendMessage,
-  setActiveTab,
-}) {
+export default function HomeMainContent({ home }) {
+  const {
+    activeVault,
+    activeMainTab,
+    setActiveMainTab,
+    setShowMultiAgent,
+    setShowSocialPlugin,
+    setShowMergeLayer,
+    setShowMultiApiSetup,
+    setShowCreateVault,
+    setShowSummary,
+    handleEndSession,
+    apiKey,
+    messages,
+    handleStartPrompt,
+    activeSession,
+    handleUpdateInsights,
+    setShowReferencesList,
+    setShowImportChat,
+    handleExportContextPack,
+    setShowGuardian,
+    epiLevel,
+    setShowEpiChat,
+    setShowCalendarExport,
+    setShowEmailDraft,
+    setShowArchival,
+    setShowMembers,
+    references,
+    handleCopyLivingSummary,
+    handleCopySessionThread,
+    handleCopyContextPack,
+    lastContextPack,
+    selectedReferenceIds,
+    isLoading,
+    streamingContent,
+    messagesEndRef,
+    toggleReferenceSelection,
+    sessionAutoSaved,
+    activeTab,
+    isSynthesizing,
+    handleSendMessage,
+    setActiveTab,
+  } = home;
+  const chatPlaceholder = activeTab === 'api'
+    ? (!apiKey ? 'Configure your API key to start...' : 'Message Grok…')
+    : 'Talk to Epi… (paste a web chat, request a context pack, or ask for a vault summary)';
+
   return (
     <div className="flex-1 flex flex-col min-w-0">
       {activeVault && (
@@ -225,11 +230,7 @@ export default function HomeMainContent({
               epiLevel={epiLevel}
               activeTab={activeTab}
               onTabChange={setActiveTab}
-              placeholder={
-                activeTab === 'api'
-                  ? (!apiKey ? 'Configure your API key to start...' : 'Message Grok…')
-                  : 'Talk to Epi… (paste a web chat, request a context pack, or ask for a vault summary)'
-              }
+              placeholder={chatPlaceholder}
             />
           </div>
         </>
