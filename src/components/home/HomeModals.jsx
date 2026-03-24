@@ -23,6 +23,8 @@ import CrossModelMergeLayer from '@/components/merge/CrossModelMergeLayer';
 import ReferenceArchival from '@/components/references/ReferenceArchival';
 import ApiKeySetup from '@/components/settings/ApiKeySetup';
 
+const NO_OP_CALLBACK = () => {};
+
 export default function HomeModals({ home }) {
   const {
     showCreateVault,
@@ -268,6 +270,7 @@ export default function HomeModals({ home }) {
       <MultiApiKeySetup
         open={showMultiApiSetup}
         onOpenChange={setShowMultiApiSetup}
+        onProviderChange={NO_OP_CALLBACK}
       />
 
       <MultiAgentSession
