@@ -87,6 +87,12 @@ The Amplifier Hub fixes this with **Vaults** — persistent workspaces that main
 
 ---
 
+## Current Status
+✅ God-component refactor complete (Home.jsx is now a thin orchestrator)  
+Core systems (Vaults, Epi, Guardian, multi-agent loops, Living Summaries) are modular and working.  
+Live demo: https://epiphanyai-ai-amplifier-hub.base44.app  
+Still polishing edge cases and adding tests — actively fixing as I go. Next: full test suite + relay-node integration sketch.
+
 ## Quick Start
 
 ### Prerequisites
