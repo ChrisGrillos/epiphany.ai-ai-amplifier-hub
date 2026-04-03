@@ -209,6 +209,3 @@ Independent AI researcher and systems architect building tools for human-AI coll
 
 ---
 
-## License
-
-MIT
