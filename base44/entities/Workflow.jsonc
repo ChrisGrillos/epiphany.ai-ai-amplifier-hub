@@ -1,0 +1,105 @@
+{
+  "name": "Workflow",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Workflow name"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this workflow does"
+    },
+    "vault_id": {
+      "type": "string",
+      "description": "Associated vault"
+    },
+    "steps": {
+      "type": "array",
+      "description": "Ordered list of workflow steps",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "agent_type": {
+            "type": "string",
+            "enum": [
+              "epi",
+              "llm",
+              "moltbook"
+            ]
+          },
+          "agent_id": {
+            "type": "string",
+            "description": "Moltbook agent ID if agent_type=moltbook"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "base44",
+              "grok",
+              "openai",
+              "anthropic",
+              "custom"
+            ]
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Prompt template with {{variables}}"
+          },
+          "condition": {
+            "type": "string",
+            "description": "JS expression to conditionally run this step"
+          },
+          "on_error": {
+            "type": "string",
+            "enum": [
+              "stop",
+              "skip",
+              "retry"
+            ]
+          }
+        }
+      }
+    },
+    "trigger_type": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "on_synthesis",
+        "on_reference_added"
+      ],
+      "default": "manual"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive"
+      ],
+      "default": "active"
+    },
+    "last_run": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_run_status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed",
+        "partial"
+      ]
+    }
+  },
+  "required": [
+    "name",
+    "vault_id",
+    "steps"
+  ]
+}

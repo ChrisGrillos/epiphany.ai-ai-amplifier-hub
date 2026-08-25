@@ -1,0 +1,63 @@
+{
+  "name": "Vault",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the Context Vault"
+    },
+    "description": {
+      "type": "string",
+      "description": "Brief description of the vault's purpose"
+    },
+    "living_summary": {
+      "type": "string",
+      "description": "The structured Living Summary markdown content"
+    },
+    "last_accessed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this vault was accessed"
+    },
+    "live_insights_level": {
+      "type": "string",
+      "enum": [
+        "off",
+        "light",
+        "medium",
+        "heavy",
+        "manual"
+      ],
+      "default": "off",
+      "description": "Live Insights intensity level"
+    },
+    "auto_accept_synthesis": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to auto-accept synthesis updates"
+    },
+    "run_guardian_after_synthesis": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to run Guardian checks after synthesis"
+    },
+    "epi_level_override": {
+      "type": "number",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "description": "Per-vault Epi level override (null uses global default)"
+    },
+    "color": {
+      "type": "string",
+      "description": "Accent color for the vault"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

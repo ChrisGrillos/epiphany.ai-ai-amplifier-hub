@@ -1,0 +1,93 @@
+{
+  "name": "BridgeConversation",
+  "type": "object",
+  "properties": {
+    "vault_id": {
+      "type": "string",
+      "description": "Associated vault"
+    },
+    "title": {
+      "type": "string",
+      "description": "Conversation title"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "user",
+              "epi",
+              "external_llm"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "llm_provider": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "List of conversation participants"
+    },
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sender": {
+            "type": "string"
+          },
+          "sender_type": {
+            "type": "string",
+            "enum": [
+              "user",
+              "epi",
+              "external_llm"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "context_summary": {
+            "type": "string",
+            "description": "Epi's context summary for this turn"
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "archived"
+      ],
+      "default": "active"
+    },
+    "bridge_url": {
+      "type": "string",
+      "description": "Shareable bridge URL for external participants"
+    },
+    "context_level": {
+      "type": "string",
+      "enum": [
+        "minimal",
+        "summary_only",
+        "full_context"
+      ],
+      "default": "summary_only",
+      "description": "How much vault context to expose"
+    }
+  },
+  "required": [
+    "vault_id",
+    "title"
+  ]
+}

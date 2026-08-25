@@ -1,0 +1,29 @@
+{
+  "name": "TutorialProgress",
+  "type": "object",
+  "properties": {
+    "completed_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "List of completed tutorial step IDs"
+    },
+    "current_step": {
+      "type": "string",
+      "description": "Current active tutorial step"
+    },
+    "tutorial_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether tutorial mode is active"
+    },
+    "dismissed": {
+      "type": "boolean",
+      "default": false,
+      "description": "User dismissed tutorial"
+    }
+  },
+  "required": []
+}

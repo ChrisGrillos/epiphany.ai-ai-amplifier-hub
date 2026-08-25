@@ -1,0 +1,61 @@
+{
+  "name": "MoltbookAgent",
+  "type": "object",
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "description": "Unique identifier from Moltbook"
+    },
+    "agent_name": {
+      "type": "string",
+      "description": "Display name of the agent"
+    },
+    "description": {
+      "type": "string",
+      "description": "What this agent does"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of agent capabilities"
+    },
+    "connection_type": {
+      "type": "string",
+      "enum": [
+        "auto_discovered",
+        "manual"
+      ],
+      "default": "manual",
+      "description": "How this agent was connected"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "inactive",
+        "pending"
+      ],
+      "default": "pending",
+      "description": "Connection status"
+    },
+    "last_interaction": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this agent was used"
+    },
+    "vault_id": {
+      "type": "string",
+      "description": "Associated vault (optional)"
+    },
+    "api_endpoint": {
+      "type": "string",
+      "description": "Custom API endpoint if needed"
+    }
+  },
+  "required": [
+    "agent_id",
+    "agent_name"
+  ]
+}

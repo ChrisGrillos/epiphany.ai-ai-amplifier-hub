@@ -1,0 +1,165 @@
+{
+  "name": "ScheduledPost",
+  "type": "object",
+  "properties": {
+    "platform": {
+      "type": "string",
+      "enum": [
+        "twitter",
+        "linkedin",
+        "instagram"
+      ],
+      "description": "Target social media platform"
+    },
+    "draft": {
+      "type": "string",
+      "description": "Post content"
+    },
+    "hashtags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Hashtags for the post"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When to publish the post"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "published",
+        "failed",
+        "cancelled"
+      ],
+      "default": "scheduled",
+      "description": "Current status of the scheduled post"
+    },
+    "vault_id": {
+      "type": "string",
+      "description": "Originating vault"
+    },
+    "account_handle": {
+      "type": "string",
+      "description": "Connected account handle/username"
+    },
+    "tone": {
+      "type": "string",
+      "description": "Tone used when generating"
+    },
+    "platform_post_id": {
+      "type": "string",
+      "description": "The post ID returned by the platform after publishing"
+    },
+    "published_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Actual publish timestamp from the platform"
+    },
+    "analytics": {
+      "type": "object",
+      "description": "Fetched engagement metrics",
+      "properties": {
+        "likes": {
+          "type": "number",
+          "default": 0
+        },
+        "shares": {
+          "type": "number",
+          "default": 0
+        },
+        "comments": {
+          "type": "number",
+          "default": 0
+        },
+        "impressions": {
+          "type": "number",
+          "default": 0
+        },
+        "clicks": {
+          "type": "number",
+          "default": 0
+        },
+        "last_fetched": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Email of the team member assigned for review/approval"
+    },
+    "approval_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending",
+      "description": "Approval state for team review"
+    },
+    "comments": {
+      "type": "array",
+      "description": "Inline feedback comments on the draft",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "author_email": {
+            "type": "string"
+          },
+          "author_name": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "activity_log": {
+      "type": "array",
+      "description": "Audit trail of changes and contributions",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "actor_email": {
+            "type": "string"
+          },
+          "actor_name": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "platform",
+    "draft",
+    "scheduled_at"
+  ]
+}

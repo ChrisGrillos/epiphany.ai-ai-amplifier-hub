@@ -1,0 +1,65 @@
+{
+  "name": "Reference",
+  "type": "object",
+  "properties": {
+    "vault_id": {
+      "type": "string",
+      "description": "Parent vault ID"
+    },
+    "filename": {
+      "type": "string",
+      "description": "Original filename"
+    },
+    "file_url": {
+      "type": "string",
+      "description": "URL to the uploaded file"
+    },
+    "file_type": {
+      "type": "string",
+      "enum": [
+        "txt",
+        "md",
+        "csv",
+        "json"
+      ],
+      "description": "File type"
+    },
+    "size": {
+      "type": "number",
+      "description": "File size in bytes"
+    },
+    "excerpt": {
+      "type": "string",
+      "description": "First ~500 chars of content"
+    },
+    "full_content": {
+      "type": "string",
+      "description": "Full file content cached"
+    },
+    "last_accessed": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this reference was used"
+    },
+    "usage_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of times attached to sessions"
+    },
+    "archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether reference is archived"
+    },
+    "archival_reason": {
+      "type": "string",
+      "description": "Why this was archived"
+    }
+  },
+  "required": [
+    "vault_id",
+    "filename",
+    "file_url",
+    "file_type"
+  ]
+}

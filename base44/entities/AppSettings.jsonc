@@ -1,0 +1,67 @@
+{
+  "name": "AppSettings",
+  "type": "object",
+  "properties": {
+    "theme": {
+      "type": "string",
+      "enum": [
+        "dark",
+        "light"
+      ],
+      "default": "dark"
+    },
+    "review_before_save": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show synthesis review before saving"
+    },
+    "default_insights_level": {
+      "type": "string",
+      "enum": [
+        "off",
+        "light",
+        "medium",
+        "heavy",
+        "manual"
+      ],
+      "default": "off"
+    },
+    "epi_level": {
+      "type": "number",
+      "enum": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "default": 1,
+      "description": "Global Epi orchestration level: 0=Off, 1=Silent, 2=Guided, 3=Conversational, 4=Full"
+    },
+    "active_provider": {
+      "type": "string",
+      "description": "Currently active LLM provider"
+    },
+    "encrypted_key_grok": {
+      "type": "string",
+      "description": "AES-GCM encrypted Grok API key"
+    },
+    "encrypted_key_openai": {
+      "type": "string",
+      "description": "AES-GCM encrypted OpenAI API key"
+    },
+    "encrypted_key_anthropic": {
+      "type": "string",
+      "description": "AES-GCM encrypted Anthropic API key"
+    },
+    "encrypted_key_custom": {
+      "type": "string",
+      "description": "AES-GCM encrypted custom provider API key"
+    },
+    "encrypted_extra_custom": {
+      "type": "string",
+      "description": "AES-GCM encrypted custom provider extra config (url, model)"
+    }
+  },
+  "required": []
+}

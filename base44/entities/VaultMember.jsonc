@@ -1,0 +1,42 @@
+{
+  "name": "VaultMember",
+  "type": "object",
+  "properties": {
+    "vault_id": {
+      "type": "string",
+      "description": "The vault this membership belongs to"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email of the member"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "Display name of the member"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "owner",
+        "editor",
+        "viewer"
+      ],
+      "default": "viewer",
+      "description": "Role within the vault"
+    },
+    "invited_by": {
+      "type": "string",
+      "description": "Email of the user who invited this member"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last time this member was active in the vault"
+    }
+  },
+  "required": [
+    "vault_id",
+    "user_email",
+    "role"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "VaultComment",
+  "type": "object",
+  "properties": {
+    "vault_id": {
+      "type": "string",
+      "description": "The vault this comment belongs to"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "vault",
+        "session",
+        "message"
+      ],
+      "description": "What is being commented on"
+    },
+    "target_id": {
+      "type": "string",
+      "description": "ID of the target (session_id or a message index ref)"
+    },
+    "author_email": {
+      "type": "string",
+      "description": "Email of the commenter"
+    },
+    "author_name": {
+      "type": "string",
+      "description": "Display name of the commenter"
+    },
+    "text": {
+      "type": "string",
+      "description": "Comment content"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this comment thread is resolved"
+    }
+  },
+  "required": [
+    "vault_id",
+    "target_type",
+    "author_email",
+    "text"
+  ]
+}

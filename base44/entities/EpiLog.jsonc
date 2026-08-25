@@ -1,0 +1,42 @@
+{
+  "name": "EpiLog",
+  "type": "object",
+  "properties": {
+    "vault_id": {
+      "type": "string",
+      "description": "Parent vault ID"
+    },
+    "action_type": {
+      "type": "string",
+      "enum": [
+        "session_start",
+        "session_end",
+        "import_chat",
+        "export_context",
+        "attach_reference",
+        "synthesis_complete",
+        "file_upload",
+        "guardian_check",
+        "context_prep",
+        "user_query"
+      ],
+      "description": "Type of orchestration action"
+    },
+    "epi_level_at_time": {
+      "type": "number",
+      "description": "Epi level when action occurred"
+    },
+    "details": {
+      "type": "object",
+      "description": "Action-specific details"
+    },
+    "epi_output": {
+      "type": "string",
+      "description": "Epi's response or action taken"
+    }
+  },
+  "required": [
+    "vault_id",
+    "action_type"
+  ]
+}

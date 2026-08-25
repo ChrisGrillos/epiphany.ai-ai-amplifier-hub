@@ -1,0 +1,119 @@
+{
+  "name": "Session",
+  "type": "object",
+  "properties": {
+    "vault_id": {
+      "type": "string",
+      "description": "Reference to the parent Vault"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "native",
+        "external_web_chat"
+      ],
+      "default": "native",
+      "description": "Where this session originated"
+    },
+    "import_source_name": {
+      "type": "string",
+      "description": "Name of external source if imported (e.g., 'Grok Web', 'ChatGPT Web')"
+    },
+    "attached_reference_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IDs of references attached to this session"
+    },
+    "title": {
+      "type": "string",
+      "description": "Auto-generated or user-defined session title"
+    },
+    "messages": {
+      "type": "array",
+      "description": "Array of messages in this session",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "system"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "image_urls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "synthesizing",
+        "completed"
+      ],
+      "default": "active"
+    },
+    "synthesis_result": {
+      "type": "object",
+      "description": "Result of the synthesis process",
+      "properties": {
+        "proposed_summary": {
+          "type": "string"
+        },
+        "changes": {
+          "type": "object",
+          "properties": {
+            "added": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "removed": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "modified": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "vault_id"
+  ]
+}
